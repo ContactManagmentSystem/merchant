@@ -6,7 +6,7 @@ import Payment from "./components/Payment";
 const OrderManage = () => {
   return (
     <div className="p-4 min-h-screen">
-      <h1 className="text-2xl font-bold mb-6 text-gray-800">
+      <h1 className="text-2xl font-bold mb-6 text-white">
         Order Management
       </h1>
 

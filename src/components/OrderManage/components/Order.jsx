@@ -9,6 +9,8 @@ import {
   Card,
   Tooltip,
   Space,
+  Modal,
+  Image,
 } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
 import {
@@ -16,7 +18,6 @@ import {
   useGetOrders,
   useDeleteOrder,
 } from "../../../api/hooks/useOrder";
-import { Modal, Image } from "antd";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -30,10 +31,13 @@ const progressColors = {
 
 const Order = () => {
   const { data: orders, isLoading } = useGetOrders();
+  console.log(orders?.data);
   const deleteOrder = useDeleteOrder();
   const updateOrder = useUpdateOrder();
   const [updatingId, setUpdatingId] = useState(null);
-  console.log(orders);
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewSrc, setPreviewSrc] = useState("");
+
   const handleProgressChange = async (id, value) => {
     try {
       setUpdatingId(id);
@@ -60,15 +64,34 @@ const Order = () => {
 
   const columns = [
     {
-      title: "Products",
+      title: "Order Code",
+      dataIndex: "orderCode",
+      render: (code) => (
+        <Text code style={{ fontSize: 16 }}>
+          {code}
+        </Text>
+      ),
+    },
+    {
+      title: "Products (Count & Total)",
       dataIndex: "products",
       render: (products) => (
         <Space direction="vertical">
-          {products.map((item, idx) => (
-            <Text key={idx}>
-              • <strong>{item.productId?.name}</strong> × {item.quantity}
-            </Text>
-          ))}
+          <Text strong>Total Items: {products.length}</Text>
+          {products.map((item, idx) => {
+            const name = item.productId?.name || "Unknown";
+            const originalPrice = item.productId?.price || 0;
+            const discount = item.productId?.discountPrice || 0;
+            const sellingPrice = originalPrice - discount;
+            const total = sellingPrice * item.quantity;
+
+            return (
+              <Text key={idx}>
+                • <strong>{name}</strong> × {item.quantity} = Ks{" "}
+                {total.toLocaleString()}
+              </Text>
+            );
+          })}
         </Space>
       ),
     },
@@ -110,28 +133,26 @@ const Order = () => {
           </Tag>
 
           {record.paymentType === "prepaid" && record.transactionScreenshot && (
-            <>
-              <Tooltip title="View Screenshot">
-                <span style={{ display: "inline-block" }}>
-                  <Image
-                    src={record.transactionScreenshot}
-                    width={60}
-                    height={60}
-                    style={{
-                      objectFit: "cover",
-                      borderRadius: 8,
-                      border: "1px solid #eee",
-                    }}
-                    preview={false}
-                    alt="Screenshot"
-                    onClick={() => {
-                      setPreviewSrc(record.transactionScreenshot);
-                      setPreviewVisible(true);
-                    }}
-                  />
-                </span>
-              </Tooltip>
-            </>
+            <Tooltip title="View Screenshot">
+              <span style={{ display: "inline-block" }}>
+                <Image
+                  src={record.transactionScreenshot}
+                  width={60}
+                  height={60}
+                  style={{
+                    objectFit: "cover",
+                    borderRadius: 8,
+                    border: "1px solid #eee",
+                  }}
+                  preview={false}
+                  alt="Screenshot"
+                  onClick={() => {
+                    setPreviewSrc(record.transactionScreenshot);
+                    setPreviewVisible(true);
+                  }}
+                />
+              </span>
+            </Tooltip>
           )}
         </Space>
       ),
@@ -143,7 +164,7 @@ const Order = () => {
         <Select
           value={progress}
           size="middle"
-          variant="borderless" // ✅ Fix deprecated warning
+          variant="borderless"
           loading={updatingId === record._id}
           onChange={(value) => handleProgressChange(record._id, value)}
           style={{
@@ -191,9 +212,6 @@ const Order = () => {
     },
   ];
 
-  // Inside your component:
-  const [previewVisible, setPreviewVisible] = useState(false);
-  const [previewSrc, setPreviewSrc] = useState("");
   return (
     <div className="p-4 max-w-7xl mx-auto">
       <Card
@@ -207,7 +225,6 @@ const Order = () => {
           🧾 Orders Overview
         </Title>
 
-        {/* ⚠️ Warning Note */}
         <div
           style={{
             background: "#fffbe6",
