@@ -157,6 +157,7 @@ const ProductTable = () => {
       render: (_, record) => (
         <Tippy
           className="bg-white border shadow"
+          appendTo={() => document.body}
           content={
             <div className="p-2">
               <div
