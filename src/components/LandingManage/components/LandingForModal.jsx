@@ -16,15 +16,18 @@ const LandingFormModal = ({
   setHeroFileList,
 }) => {
   const [deletedHeroImages, setDeletedHeroImages] = useState([]);
+  const [colour, setColour] = useState("#000000");
 
   useEffect(() => {
     if (open) {
       setTimeout(() => {
         if (landing) {
+          const initialColor = landing?.colourCode || "#000000";
           form.setFieldsValue({
             storeName: landing?.storeName || "",
-            colourCode: landing?.colourCode || "#000000",
+            colourCode: initialColor,
           });
+          setColour(initialColor);
 
           setFileList([
             {
@@ -51,6 +54,7 @@ const LandingFormModal = ({
             storeName: "",
             colourCode: "#000000",
           });
+          setColour("#000000");
           setFileList([]);
           setHeroFileList([]);
           setDeletedHeroImages([]);
@@ -68,8 +72,6 @@ const LandingFormModal = ({
   };
 
   const handleFinish = (values) => {
-//     console.log("Values from form:", values);
-
     const formData = new FormData();
     formData.append("storeName", values.storeName);
     formData.append("colourCode", values.colourCode);
@@ -122,17 +124,24 @@ const LandingFormModal = ({
           ]}
         >
           <>
-            <HexColorPicker />
+            <HexColorPicker
+              color={colour}
+              onChange={(newColor) => {
+                const upperColor = newColor.toUpperCase();
+                setColour(upperColor);
+                form.setFieldsValue({ colourCode: upperColor });
+              }}
+            />
             <Form.Item noStyle shouldUpdate>
               {({ getFieldValue, setFieldsValue }) => (
                 <Input
                   className="mt-2"
                   value={getFieldValue("colourCode")}
-                  onChange={(e) =>
-                    setFieldsValue({
-                      colourCode: e.target.value.toUpperCase(),
-                    })
-                  }
+                  onChange={(e) => {
+                    const newColor = e.target.value.toUpperCase();
+                    setColour(newColor);
+                    setFieldsValue({ colourCode: newColor });
+                  }}
                   placeholder="#000000"
                 />
               )}

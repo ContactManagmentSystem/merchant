@@ -19,7 +19,7 @@ const LandingManagement = () => {
   const editLanding = useEditLanding();
 
   const landing = landingData?.data || null;
-
+  console.log(landing)
   const handleSubmit = (formData) => {
     const onSuccess = () => {
       message.success(landing ? "Landing updated." : "Landing created.");
