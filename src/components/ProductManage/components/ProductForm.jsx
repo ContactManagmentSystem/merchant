@@ -30,6 +30,7 @@ const ProductForm = ({
   const addProduct = useCreateProduct();
   const { data: categoryData } = useGetCategory(1, 100);
   const [deletedImages, setDeletedImages] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (modalType === "edit" && editingProduct) {
@@ -51,9 +52,7 @@ const ProductForm = ({
         }))
       );
     } else {
-      form.setFieldsValue({
-        discountPrice: 0,
-      });
+      form.setFieldsValue({ discountPrice: 0 });
       form.resetFields();
       setFileList([]);
       setDeletedImages([]);
@@ -80,36 +79,66 @@ const ProductForm = ({
 
         formData.append("deletedImages", JSON.stringify(deletedImages));
 
+        const config = {
+          onUploadProgress: (e) => {
+            const percent = Math.round((e.loaded * 100) / e.total);
+            message.open({
+              key: "product-upload",
+              type: "loading",
+              content: `Uploading... ${percent}%`,
+              duration: 0,
+            });
+          },
+        };
+
+        setUploading(true);
+
         if (modalType === "edit" && editingProduct) {
           editProduct.mutate(
-            { productId: editingProduct._id, productData: formData },
+            {
+              productId: editingProduct._id,
+              productData: formData,
+              config,
+            },
             {
               onSuccess: () => {
+                message.destroy("product-upload");
                 message.success("Product updated successfully");
                 setModalVisible(false);
+                setUploading(false);
               },
               onError: (err) => {
+                message.destroy("product-upload");
                 message.error(`Error: ${err.message}`);
+                setUploading(false);
               },
             }
           );
         } else {
-          addProduct.mutate(formData, {
-            onSuccess: () => {
-              message.success("Product added successfully");
-              form.resetFields();
-              setFileList([]);
-              setDeletedImages([]);
-              setModalVisible(false);
-            },
-            onError: (err) => {
-              message.error(`Error: ${err.message}`);
-            },
-          });
+          addProduct.mutate(
+            { data: formData, config },
+            {
+              onSuccess: () => {
+                message.destroy("product-upload");
+                message.success("Product added successfully");
+                form.resetFields();
+                setFileList([]);
+                setDeletedImages([]);
+                setModalVisible(false);
+                setUploading(false);
+              },
+              onError: (err) => {
+                message.destroy("product-upload");
+                message.error(`Error: ${err.message}`);
+                setUploading(false);
+              },
+            }
+          );
         }
       })
       .catch((info) => {
         message.error("Validation Failed:", info);
+        setUploading(false);
       });
   };
 
@@ -232,7 +261,7 @@ const ProductForm = ({
       </Form.Item>
 
       <Form.Item>
-        <Button type="primary" htmlType="submit" block>
+        <Button type="primary" htmlType="submit" block loading={uploading}>
           {modalType === "edit" ? "Save Product" : "Add Product"}
         </Button>
       </Form.Item>

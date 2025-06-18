@@ -64,8 +64,8 @@ export const useEditProduct = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ productId, productData }) =>
-      editData("products", productId, productData),
+    mutationFn: ({ productId, productData, config }) =>
+      editData("products", productId, productData, config),
     onSuccess: () => {
       queryClient.invalidateQueries(["products"]);
     },
@@ -77,7 +77,7 @@ export const useCreateProduct = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (productData) => createData("products", productData),
+    mutationFn: ({ data, config }) => createData("products", data, config),
     onSuccess: () => {
       queryClient.invalidateQueries(["products"]);
     },
@@ -101,8 +101,8 @@ export const useEditPackage = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ packageId, packageData }) =>
-      editData("packages", packageId, packageData), // Uses editProduct but for packages
+    mutationFn: ({ packageId, packageData, config }) =>
+      editData("packages", packageId, packageData, config), // Uses editProduct but for packages
     onSuccess: () => {
       queryClient.invalidateQueries(["packages"]);
     },
@@ -114,7 +114,7 @@ export const useCreatePackage = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (packageData) => createData("packages", packageData),
+    mutationFn: ({ data, config }) => createData("packages", data, config),
     onSuccess: () => {
       queryClient.invalidateQueries(["packages"]);
     },

@@ -99,11 +99,9 @@ export const getPackData = async (
   }
 };
 
-export const createData = async (path, productData) => {
+export const createData = async (path, productData, config = {}) => {
   try {
-    const response = await axiosInstance.post(`/${path}`, productData);
-    // console.log(response)
-    // console.log(path,productData)
+    const response = await axiosInstance.post(`/${path}`, productData, config);
     return response.data;
   } catch (error) {
     console.error("Error creating product:", error);
@@ -111,11 +109,12 @@ export const createData = async (path, productData) => {
   }
 };
 
-export const editData = async (path, productId, productData) => {
+export const editData = async (path, productId, productData, config = {}) => {
   try {
     const response = await axiosInstance.put(
       `/${path}/${productId}`,
-      productData
+      productData,
+      config
     );
     return response.data;
   } catch (error) {
@@ -123,6 +122,7 @@ export const editData = async (path, productId, productData) => {
     throw error;
   }
 };
+
 export const deleteData = async (path, productId) => {
   try {
     const response = await axiosInstance.delete(`/${path}/${productId}`);

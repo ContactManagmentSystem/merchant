@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import { useEffect, useState } from "react";
-import { Modal, Form, Input, Upload, Button } from "antd";
+import { Modal, Form, Input, Upload, Button, message } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { HexColorPicker } from "react-colorful";
 
@@ -93,7 +93,19 @@ const LandingFormModal = ({
       formData.append("deletedHeroImages", JSON.stringify(deletedHeroImages));
     }
 
-    onSubmit(formData);
+    const config = {
+      onUploadProgress: (e) => {
+        const percent = Math.round((e.loaded * 100) / e.total);
+        message.open({
+          key: "landing-upload",
+          type: "loading",
+          content: `Uploading... ${percent}%`,
+          duration: 0,
+        });
+      },
+    };
+
+    onSubmit(formData, config);
   };
 
   return (

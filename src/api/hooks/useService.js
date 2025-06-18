@@ -1,3 +1,5 @@
+// src/api/hooks/useService.js
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createData,
@@ -20,7 +22,7 @@ export const useGetCategory = (page = 1, limit = 10) => {
 export const useCreateCategory = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (formData) => createData("cate", formData),
+    mutationFn: ({ data, config }) => createData("cate", data, config),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cate"] });
     },
@@ -30,8 +32,8 @@ export const useCreateCategory = () => {
 export const useEditCategory = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ categoryId, categoryData }) =>
-      editData("cate", categoryId, categoryData),
+    mutationFn: ({ categoryId, categoryData, config }) =>
+      editData("cate", categoryId, categoryData, config),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cate"] });
     },
@@ -64,7 +66,7 @@ export const useGetLanding = () => {
 export const useCreateLanding = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (formData) => createData("landing", formData), // POST /landing
+    mutationFn: ({ data, config }) => createData("landing", data, config), // POST /landing
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["landing"] });
     },
@@ -75,8 +77,8 @@ export const useCreateLanding = () => {
 export const useEditLanding = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ landingId, landingData }) =>
-      editData("landing", landingId, landingData), // PUT /landing/:id
+    mutationFn: ({ landingId, landingData, config }) =>
+      editData("landing", landingId, landingData, config), // PUT /landing/:id
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["landing"] });
     },
@@ -97,7 +99,7 @@ export const useGetPayments = (page = 1, limit = 10) => {
 export const useCreatePayment = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (formData) => createData("payment", formData),
+    mutationFn: ({ data, config }) => createData("payment", data, config),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["payment"] });
     },
@@ -107,8 +109,8 @@ export const useCreatePayment = () => {
 export const useEditPayment = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ paymentId, paymentData }) =>
-      editData("payment", paymentId, paymentData),
+    mutationFn: ({ paymentId, paymentData, config }) =>
+      editData("payment", paymentId, paymentData, config),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["payment"] });
     },
@@ -140,7 +142,8 @@ export const useGetSocialLinks = (landingId) => {
 export const useCreateSocialLink = (landingId) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (formData) => createData(`social/${landingId}`, formData), // POST /social/:landingId
+    mutationFn: ({ data, config }) =>
+      createData(`social/${landingId}`, data, config), // POST /social/:landingId
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["socialLinks", landingId] });
     },
@@ -150,8 +153,8 @@ export const useCreateSocialLink = (landingId) => {
 export const useEditSocialLink = (landingId) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ socialLinkId, socialLinkData }) =>
-      editData(`social`, socialLinkId, socialLinkData), // PUT /social/:socialLinkId
+    mutationFn: ({ socialLinkId, socialLinkData, config }) =>
+      editData(`social`, socialLinkId, socialLinkData, config), // PUT /social/:socialLinkId
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["socialLinks", landingId] });
     },
@@ -167,4 +170,3 @@ export const useDeleteSocialLink = (landingId) => {
     },
   });
 };
-

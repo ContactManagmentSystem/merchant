@@ -30,23 +30,42 @@ const LandingManagement = () => {
     }
   }, [landing, setCurrency]);
 
-  const handleSubmit = (formData) => {
+  const handleSubmit = (formData, config) => {
     const onSuccess = () => {
+      message.destroy("landing-upload");
       message.success(landing ? "Landing updated." : "Landing created.");
       setModalVisible(false);
     };
 
     const onError = () => {
+      message.destroy("landing-upload");
       message.error("Error saving landing.");
+    };
+
+    // Add upload progress tracking to config
+    const finalConfig = {
+      ...config,
+      onUploadProgress: (e) => {
+        const percent = Math.round((e.loaded * 100) / e.total);
+        message.open({
+          key: "landing-upload",
+          type: "loading",
+          content: `Uploading... ${percent}%`,
+          duration: 0,
+        });
+      },
     };
 
     if (landing) {
       editLanding.mutate(
-        { landingId: landing._id, landingData: formData },
+        { landingId: landing._id, landingData: formData, config: finalConfig },
         { onSuccess, onError }
       );
     } else {
-      createLanding.mutate(formData, { onSuccess, onError });
+      createLanding.mutate(
+        { data: formData, config: finalConfig },
+        { onSuccess, onError }
+      );
     }
   };
 

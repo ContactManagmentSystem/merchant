@@ -3,7 +3,7 @@ import Cookies from "js-cookie";
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  // baseURL: 'http://localhost:8989/api/v1',
+  // baseURL: 'http://localhost:7677/api/v1',
 });
 
 axiosInstance.interceptors.request.use(

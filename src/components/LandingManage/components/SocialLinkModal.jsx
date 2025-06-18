@@ -9,7 +9,7 @@ const SocialLinkModal = ({ open, onClose, form, onSubmit, isEditing }) => {
       open={open}
       onCancel={onClose}
       footer={null}
-      destroyOnClose={false}
+      destroyOnHidden={false}
       centered
       title={
         <span className="text-lg font-semibold">

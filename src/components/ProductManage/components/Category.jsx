@@ -12,6 +12,7 @@ import {
   Select,
 } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
+import imageCompression from "browser-image-compression";
 import {
   useGetCategory,
   useCreateCategory,
@@ -31,6 +32,7 @@ const Category = () => {
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
   const [pageSize, setPageSize] = useState(5);
+  const [uploading, setUploading] = useState(false);
 
   const { data, isLoading } = useGetCategory(1, pageSize);
   const createCategory = useCreateCategory();
@@ -69,35 +71,79 @@ const Category = () => {
     });
   };
 
-  const handleSave = () => {
-    form.validateFields().then((values) => {
-      const formData = new FormData();
-      formData.append("name", values.name);
-      formData.append("description", values.description);
-      if (fileList[0]?.originFileObj) {
-        formData.append("categoryImage", fileList[0].originFileObj);
-      }
+const handleSave = async () => {
+  try {
+    const values = await form.validateFields();
+    const formData = new FormData();
+    formData.append("name", values.name);
+    formData.append("description", values.description);
 
-      if (editingCategory) {
-        editCategory.mutate(
-          { categoryId: editingCategory._id, categoryData: formData },
-          {
-            onSuccess: () => {
-              message.success("Category updated");
-              setModalVisible(false);
-            },
-          }
-        );
-      } else {
-        createCategory.mutate(formData, {
+    if (fileList[0]?.originFileObj) {
+      const compressed = await imageCompression(fileList[0].originFileObj, {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+      });
+      formData.append("categoryImage", compressed);
+    }
+
+    const config = {
+      onUploadProgress: (e) => {
+        const percent = Math.round((e.loaded * 100) / e.total);
+        message.open({
+          key: "upload",
+          type: "loading",
+          content: `Uploading... ${percent}%`,
+          duration: 0,
+        });
+      },
+    };
+
+    setUploading(true);
+
+    if (editingCategory) {
+      editCategory.mutate(
+        {
+          categoryId: editingCategory._id,
+          categoryData: formData,
+          config,
+        },
+        {
           onSuccess: () => {
+            message.destroy("upload");
+            message.success("Category updated");
+            setModalVisible(false);
+            setUploading(false);
+          },
+          onError: () => {
+            message.destroy("upload");
+            setUploading(false);
+          },
+        }
+      );
+    } else {
+      createCategory.mutate(
+        { data: formData, config },
+        {
+          onSuccess: () => {
+            message.destroy("upload");
             message.success("Category created");
             setModalVisible(false);
+            setUploading(false);
           },
-        });
-      }
-    });
-  };
+          onError: () => {
+            message.destroy("upload");
+            setUploading(false);
+          },
+        }
+      );
+    }
+  } catch (err) {
+    console.error(err);
+    message.destroy("upload");
+    setUploading(false);
+  }
+};
+
 
   const columns = [
     {
@@ -175,6 +221,7 @@ const Category = () => {
         onCancel={() => setModalVisible(false)}
         onOk={handleSave}
         okText={editingCategory ? "Update" : "Create"}
+        confirmLoading={uploading}
       >
         <Form form={form} layout="vertical">
           <Form.Item name="name" label="Name" rules={[{ required: true }]}>
