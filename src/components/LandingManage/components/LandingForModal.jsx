@@ -26,6 +26,7 @@ const LandingFormModal = ({
           form.setFieldsValue({
             storeName: landing?.storeName || "",
             colourCode: initialColor,
+            currency: landing?.currency || "",
           });
           setColour(initialColor);
 
@@ -53,6 +54,7 @@ const LandingFormModal = ({
           form.setFieldsValue({
             storeName: "",
             colourCode: "#000000",
+            currency: "",
           });
           setColour("#000000");
           setFileList([]);
@@ -75,17 +77,21 @@ const LandingFormModal = ({
     const formData = new FormData();
     formData.append("storeName", values.storeName);
     formData.append("colourCode", values.colourCode);
+    formData.append("currency", values.currency || "");
 
+    // Main image
     if (fileList.length > 0 && fileList[0].originFileObj) {
       formData.append("image", fileList[0].originFileObj);
     }
 
+    // Hero images
     heroFileList.forEach((file) => {
       if (file.originFileObj) {
         formData.append("heroImage", file.originFileObj);
       }
     });
 
+    // Deleted hero images
     if (deletedHeroImages.length > 0) {
       formData.append("deletedHeroImages", JSON.stringify(deletedHeroImages));
     }
@@ -102,7 +108,6 @@ const LandingFormModal = ({
       okText={landing ? "Update" : "Create"}
     >
       <Form form={form} layout="vertical" onFinish={handleFinish}>
-        {/* Store Name */}
         <Form.Item
           name="storeName"
           label="Store Name"
@@ -111,7 +116,6 @@ const LandingFormModal = ({
           <Input placeholder="Enter store name" />
         </Form.Item>
 
-        {/* Colour Picker */}
         <Form.Item
           label="Primary Colour Code"
           name="colourCode"
@@ -149,7 +153,14 @@ const LandingFormModal = ({
           </>
         </Form.Item>
 
-        {/* Main Image Upload */}
+        <Form.Item
+          name="currency"
+          label="Currency (e.g., MMK, USD)"
+          rules={[{ required: true, message: "Currency is required" }]}
+        >
+          <Input placeholder="Enter currency symbol or code" />
+        </Form.Item>
+
         <Form.Item
           label="Main Landing Image"
           required={!landing}
@@ -167,7 +178,6 @@ const LandingFormModal = ({
           </Upload>
         </Form.Item>
 
-        {/* Hero Images Upload */}
         <Form.Item label="Hero Banner Images (multiple)">
           <Upload
             listType="picture"

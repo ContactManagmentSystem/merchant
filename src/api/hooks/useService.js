@@ -124,3 +124,47 @@ export const useDeletePayment = () => {
     },
   });
 };
+
+// ============================
+// SOCIAL LINK CRUD
+// ============================
+
+export const useGetSocialLinks = (landingId) => {
+  return useQuery({
+    queryKey: ["socialLinks", landingId],
+    queryFn: () => getSingle(`social/${landingId}`), // GET /social/:landingId
+    enabled: !!landingId, // only fetch if landingId exists
+  });
+};
+
+export const useCreateSocialLink = (landingId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (formData) => createData(`social/${landingId}`, formData), // POST /social/:landingId
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["socialLinks", landingId] });
+    },
+  });
+};
+
+export const useEditSocialLink = (landingId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ socialLinkId, socialLinkData }) =>
+      editData(`social`, socialLinkId, socialLinkData), // PUT /social/:socialLinkId
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["socialLinks", landingId] });
+    },
+  });
+};
+
+export const useDeleteSocialLink = (landingId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (socialLinkId) => deleteData(`social`, socialLinkId), // DELETE /social/:socialLinkId
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["socialLinks", landingId] });
+    },
+  });
+};
+

@@ -18,6 +18,8 @@ import {
   useGetOrders,
   useDeleteOrder,
 } from "../../../api/hooks/useOrder";
+import DeclinedModal from "./DeclinedModal";
+import AcceptedModal from "./AcceptedModal";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -31,25 +33,52 @@ const progressColors = {
 
 const Order = () => {
   const { data: orders, isLoading } = useGetOrders();
-  console.log(orders?.data);
   const deleteOrder = useDeleteOrder();
   const updateOrder = useUpdateOrder();
+  console.log(orders)
+
   const [updatingId, setUpdatingId] = useState(null);
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewSrc, setPreviewSrc] = useState("");
+  const [isReasonModalVisible, setIsReasonModalVisible] = useState(false);
+  const [isAcceptedModalVisible, setIsAcceptedModalVisible] = useState(false);
+  const [currentOrderId, setCurrentOrderId] = useState(null);
+  const [selectedProgress, setSelectedProgress] = useState("");
+  const [reasonText, setReasonText] = useState("");
+  const [orderCodeInput, setOrderCodeInput] = useState("");
 
-  const handleProgressChange = async (id, value) => {
+  const handleProgressChange = (id, value) => {
+    setCurrentOrderId(id);
+    setSelectedProgress(value);
+
+    if (value === "declined") {
+      setIsReasonModalVisible(true);
+    } else if (value === "accepted" || value === "done") {
+      setIsAcceptedModalVisible(true);
+    } else {
+      submitProgressChange(id, value);
+    }
+  };
+
+  const submitProgressChange = async (id, progress, reasonOrCode = "") => {
     try {
       setUpdatingId(id);
-      await updateOrder.mutateAsync({
-        orderId: id,
-        orderData: { progress: value },
-      });
-      message.success("Order progress updated.");
+      const orderData = { progress };
+
+      if (progress === "declined") orderData.reason = reasonOrCode;
+      if (progress === "accepted" || progress === "done")
+        orderData.orderCode = reasonOrCode;
+
+      await updateOrder.mutateAsync({ orderId: id, orderData });
+      message.success("Order updated.");
     } catch {
       message.error("Failed to update order.");
     } finally {
       setUpdatingId(null);
+      setIsReasonModalVisible(false);
+      setIsAcceptedModalVisible(false);
+      setReasonText("");
+      setOrderCodeInput("");
     }
   };
 
@@ -66,11 +95,23 @@ const Order = () => {
     {
       title: "Order Code",
       dataIndex: "orderCode",
-      render: (code) => (
-        <Text code style={{ fontSize: 16 }}>
-          {code}
-        </Text>
-      ),
+      render: (code, record) => {
+        const needsCode = ["accepted", "done", "pending", "declined"].includes(
+          record.progress
+        );
+        const displayCode = needsCode && !code ? "No Order Code" : code;
+        return (
+          <Text
+            code
+            style={{
+              fontSize: 16,
+              color: !code && needsCode ? "red" : undefined,
+            }}
+          >
+            {displayCode}
+          </Text>
+        );
+      },
     },
     {
       title: "Products (Count & Total)",
@@ -80,9 +121,9 @@ const Order = () => {
           <Text strong>Total Items: {products.length}</Text>
           {products.map((item, idx) => {
             const name = item.productId?.name || "Unknown";
-            const originalPrice = item.productId?.price || 0;
+            const price = item.productId?.price || 0;
             const discount = item.productId?.discountPrice || 0;
-            const sellingPrice = originalPrice - discount;
+            const sellingPrice = price - discount;
             const total = sellingPrice * item.quantity;
 
             return (
@@ -131,27 +172,24 @@ const Order = () => {
           <Tag color={record.paymentType === "COD" ? "default" : "cyan"}>
             {record.paymentType}
           </Tag>
-
-          {record.paymentType === "prepaid" && record.transactionScreenshot && (
+          {record.paymentType === "Prepaid" && record.transactionScreenshot && (
             <Tooltip title="View Screenshot">
-              <span style={{ display: "inline-block" }}>
-                <Image
-                  src={record.transactionScreenshot}
-                  width={60}
-                  height={60}
-                  style={{
-                    objectFit: "cover",
-                    borderRadius: 8,
-                    border: "1px solid #eee",
-                  }}
-                  preview={false}
-                  alt="Screenshot"
-                  onClick={() => {
-                    setPreviewSrc(record.transactionScreenshot);
-                    setPreviewVisible(true);
-                  }}
-                />
-              </span>
+              <Image
+                src={record.transactionScreenshot}
+                width={60}
+                height={60}
+                style={{
+                  objectFit: "cover",
+                  borderRadius: 8,
+                  border: "1px solid #eee",
+                }}
+                preview={false}
+                alt="Screenshot"
+                onClick={() => {
+                  setPreviewSrc(record.transactionScreenshot);
+                  setPreviewVisible(true);
+                }}
+              />
             </Tooltip>
           )}
         </Space>
@@ -194,6 +232,22 @@ const Order = () => {
       ),
     },
     {
+      title: "Reason",
+      dataIndex: "reason",
+      render: (reason, record) => {
+        const showSet = record.progress === "declined" && !reason;
+        return (
+          <Text
+            type={showSet ? "warning" : "danger"}
+            italic={showSet || Boolean(reason)}
+            style={showSet ? { color: "#fa8c16" } : {}}
+          >
+            {showSet ? "Set Reason" : reason || "–"}
+          </Text>
+        );
+      },
+    },
+    {
       title: "Action",
       render: (_, record) => (
         <Popconfirm
@@ -214,35 +268,10 @@ const Order = () => {
 
   return (
     <div className="p-4 max-w-7xl mx-auto">
-      <Card
-        bordered={false}
-        style={{
-          background: "#ffffff",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-        }}
-      >
+      <Card bordered={false} style={{ background: "#ffffff" }}>
         <Title level={3} className="mb-6 text-center">
           🧾 Orders Overview
         </Title>
-
-        <div
-          style={{
-            background: "#fffbe6",
-            border: "1px solid #ffe58f",
-            padding: "12px 16px",
-            borderRadius: 8,
-            marginBottom: 16,
-          }}
-        >
-          <Text strong style={{ color: "#ad6800" }}>
-            ⚠️ Be careful when setting an order to <Tag color="green">done</Tag>
-            .
-          </Text>
-          <div style={{ fontSize: 13, marginTop: 4, color: "#ad6800" }}>
-            Once marked as <strong>done</strong>, the order cannot be edited or
-            deleted, and the stock count will be reduced.
-          </div>
-        </div>
 
         <Table
           rowKey="_id"
@@ -268,6 +297,32 @@ const Order = () => {
           src={previewSrc}
         />
       </Modal>
+
+      <DeclinedModal
+        open={isReasonModalVisible}
+        onClose={() => {
+          setIsReasonModalVisible(false);
+          setReasonText("");
+        }}
+        reason={reasonText}
+        setReason={setReasonText}
+        onSubmit={(reason) =>
+          submitProgressChange(currentOrderId, selectedProgress, reason)
+        }
+      />
+
+      <AcceptedModal
+        open={isAcceptedModalVisible}
+        onClose={() => {
+          setIsAcceptedModalVisible(false);
+          setOrderCodeInput("");
+        }}
+        orderCode={orderCodeInput}
+        setOrderCode={setOrderCodeInput}
+        onSubmit={(code) =>
+          submitProgressChange(currentOrderId, selectedProgress, code)
+        }
+      />
     </div>
   );
 };

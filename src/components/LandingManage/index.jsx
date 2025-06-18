@@ -7,6 +7,7 @@ import {
   useEditLanding,
 } from "../../api/hooks/useService";
 import LandingFormModal from "./components/LandingForModal";
+import SocialLinkManager from "./components/SocialLinkManager";
 
 const LandingManagement = () => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -20,6 +21,7 @@ const LandingManagement = () => {
 
   const landing = landingData?.data || null;
   console.log(landing)
+
   const handleSubmit = (formData) => {
     const onSuccess = () => {
       message.success(landing ? "Landing updated." : "Landing created.");
@@ -80,13 +82,17 @@ const LandingManagement = () => {
                 <p className="font-semibold text-gray-300">Colour Code:</p>
                 <span
                   className="inline-block mt-1 px-3 py-1 rounded shadow-md border"
-                  style={{
-                    backgroundColor: landing.colourCode,
-                    color: "#fff",
-                  }}
+                  style={{ backgroundColor: landing.colourCode, color: "#fff" }}
                 >
                   {landing.colourCode}
                 </span>
+              </div>
+
+              <div className="mt-4">
+                <p className="font-semibold text-gray-300">Currency:</p>
+                <div className="text-white">
+                  {landing.currency || "Not set"}
+                </div>
               </div>
             </div>
 
@@ -141,6 +147,7 @@ const LandingManagement = () => {
         heroFileList={heroFileList}
         setHeroFileList={setHeroFileList}
       />
+      <SocialLinkManager landingId={landing?._id}/>
     </div>
   );
 };
