@@ -1,16 +1,7 @@
 /* eslint-disable react/jsx-key */
 /* eslint-disable react/prop-types */
-import { useState, useEffect } from "react";
-import {
-  Button,
-  List,
-  message,
-  Tooltip,
-  Modal,
-  Form,
-  Input,
-  Select,
-} from "antd";
+import { useState } from "react";
+import { Button, List, message, Tooltip, Form, Card } from "antd";
 import {
   PlusOutlined,
   DeleteOutlined,
@@ -23,8 +14,7 @@ import {
   useDeleteSocialLink,
   useEditSocialLink,
 } from "../../../api/hooks/useService";
-
-const { Option } = Select;
+import SocialLinkModal from "./SocialLinkModal";
 
 const SocialLinkManager = ({ landingId }) => {
   const [modalOpen, setModalOpen] = useState(false);
@@ -61,78 +51,38 @@ const SocialLinkManager = ({ landingId }) => {
     const { name, link, icon, redirectType } = values;
     let finalLink = link;
 
-    if (redirectType === "email" && !link.startsWith("mailto:")) {
-      finalLink = `mailto:${link}`;
-    } else if (redirectType === "phone" && !link.startsWith("tel:")) {
-      finalLink = `tel:${link}`;
-    }
+    if (redirectType === "email") finalLink = `mailto:${link}`;
+    if (redirectType === "phone") finalLink = `tel:${link}`;
 
-    const payload = {
-      name,
-      link: finalLink,
-      icon,
+    const payload = { name, link: finalLink, icon };
+
+    const onSuccess = () => {
+      message.success(editingItem ? "Link updated" : "Link added");
+      setModalOpen(false);
+      form.resetFields();
+      setEditingItem(null);
+      refetch();
     };
+
+    const onError = () => message.error("Operation failed");
 
     if (editingItem) {
       editSocialLink.mutate(
         { socialLinkId: editingItem._id, socialLinkData: payload },
-        {
-          onSuccess: () => {
-            message.success("Social link updated");
-            setModalOpen(false);
-            setEditingItem(null);
-            refetch();
-          },
-          onError: () => {
-            message.error("Update failed");
-          },
-        }
+        { onSuccess, onError }
       );
     } else {
-      createSocialLink.mutate(payload, {
-        onSuccess: () => {
-          message.success("Social link added successfully");
-          setModalOpen(false);
-          form.resetFields();
-          refetch();
-        },
-        onError: () => {
-          message.error("Failed to add social link");
-        },
-      });
+      createSocialLink.mutate(payload, { onSuccess, onError });
     }
   };
-
-  const handleDelete = (id) => {
-    deleteSocialLink.mutate(id, {
-      onSuccess: () => {
-        message.success("Link deleted");
-        refetch();
-      },
-      onError: () => {
-        message.error("Failed to delete");
-      },
-    });
-  };
-
-  useEffect(() => {
-    if (!modalOpen) {
-      form.resetFields();
-      setEditingItem(null);
-    }
-  }, [modalOpen]);
 
   return (
-    <div className="bg-neutral-900 text-white p-6 rounded-xl shadow-lg space-y-6">
-      <div className="flex justify-between items-center">
-        <h3 className="text-2xl font-bold tracking-wide">Social Media Links</h3>
+    <Card
+      title="Social Media Links"
+      extra={
         <div className="flex gap-2">
-          <Tooltip title="Refresh list">
-            <Button
-              shape="circle"
-              icon={<ReloadOutlined />}
-              onClick={() => refetch()}
-            />
+          <Tooltip title="Refresh">
+            <Button icon={<ReloadOutlined />} onClick={refetch} />
           </Tooltip>
           <Button
             type="primary"
@@ -142,144 +92,69 @@ const SocialLinkManager = ({ landingId }) => {
             Add New
           </Button>
         </div>
-      </div>
-
+      }
+      style={{
+        backgroundColor: "#fff",
+        borderRadius: "12px",
+        boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
+        marginBottom: "24px",
+      }}
+    >
       <List
         loading={isLoading}
         dataSource={data?.data || []}
+        bordered
         locale={{ emptyText: "No social links added yet." }}
-        className=" "
         renderItem={(item) => (
           <List.Item
-            className="!bg-white rounded-lg p-3 m-2 flex flex-col md:flex-row md:justify-between md:items-center shadow-sm border border-gray-200"
+            style={{
+              backgroundColor: "#fafafa",
+              borderRadius: "8px",
+              marginBottom: "12px",
+              padding: "16px",
+            }}
             actions={[
-              <Tooltip title="Edit this link" key="edit">
+              <Tooltip title="Edit">
                 <Button
-                  type="text"
                   icon={<EditOutlined />}
                   onClick={() => openEditModal(item)}
                 />
               </Tooltip>,
-              <Tooltip title="Delete this link" key="delete">
+              <Tooltip title="Delete">
                 <Button
-                  type="text"
-                  danger
                   icon={<DeleteOutlined />}
-                  onClick={() => handleDelete(item._id)}
+                  danger
+                  onClick={() =>
+                    deleteSocialLink.mutate(item._id, {
+                      onSuccess: () => {
+                        message.success("Link deleted");
+                        refetch();
+                      },
+                      onError: () => message.error("Delete failed"),
+                    })
+                  }
                 />
               </Tooltip>,
             ]}
           >
-            <div className="flex flex-col gap-1 p-3">
-              <p className="text-lg font-semibold text-gray-900">{item.name}</p>
-              <a
-                href={item.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 underline break-all"
-              >
-                {item.link}
-              </a>
-              <p className="text-sm text-gray-500">Icon: {item.icon}</p>
+            <div>
+              <strong>{item.name}</strong>
+              <p style={{ margin: "4px 0", color: "#555" }}>{item.link}</p>
+              <small style={{ color: "#999" }}>Icon: {item.icon}</small>
             </div>
           </List.Item>
         )}
       />
 
-      {/* Modal Form */}
-      <Modal
+      {/* Modal Component */}
+      <SocialLinkModal
         open={modalOpen}
-        title={
-          <span className="text-lg font-semibold">
-            {editingItem ? "Edit Social Media Link" : "Add Social Media Link"}
-          </span>
-        }
-        onCancel={() => setModalOpen(false)}
-        footer={null}
-        destroyOnClose
-        centered
-      >
-        <Form form={form} layout="vertical" onFinish={handleSubmit}>
-          <Form.Item
-            name="name"
-            label="Platform Name"
-            rules={[
-              { required: true, message: "Please enter the platform name" },
-            ]}
-          >
-            <Input placeholder="e.g., Telegram, Facebook, WhatsApp" />
-          </Form.Item>
-
-          <Form.Item
-            name="redirectType"
-            label="Redirect Type"
-            rules={[{ required: true, message: "Please select redirect type" }]}
-            initialValue="url"
-          >
-            <Select>
-              <Option value="url">Website URL (https://...)</Option>
-              <Option value="email">Email (support@example.com)</Option>
-              <Option value="phone">Phone (+95912345678)</Option>
-            </Select>
-          </Form.Item>
-
-          {/* Dynamic Link Input */}
-          <Form.Item
-            shouldUpdate={(prev, curr) =>
-              prev.redirectType !== curr.redirectType
-            }
-          >
-            {({ getFieldValue }) => {
-              const type = getFieldValue("redirectType");
-              let placeholder = "https://...";
-              let extra = "Include full URL like https://t.me/username";
-
-              if (type === "email") {
-                placeholder = "e.g., support@example.com";
-                extra = "Email will open in mail app";
-              } else if (type === "phone") {
-                placeholder = "e.g., +95912345678";
-                extra = "Phone will open in dialer";
-              }
-
-              return (
-                <>
-                  <Form.Item
-                    name="link"
-                    label="Link"
-                    rules={[
-                      { required: true, message: "Please enter the link" },
-                    ]}
-                  >
-                    <Input placeholder={placeholder} />
-                  </Form.Item>
-                  <p className="text-xs text-gray-500 mb-4">{extra}</p>
-                </>
-              );
-            }}
-          </Form.Item>
-
-          <Form.Item
-            name="icon"
-            label="Icon Identifier"
-            rules={[{ required: true, message: "Please enter the icon name" }]}
-          >
-            <Input placeholder="e.g., TelegramIcon, FacebookIcon, WhatsAppIcon" />
-          </Form.Item>
-
-          <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              block
-              loading={createSocialLink.isLoading || editSocialLink.isLoading}
-            >
-              {editingItem ? "Update Link" : "Add Link"}
-            </Button>
-          </Form.Item>
-        </Form>
-      </Modal>
-    </div>
+        onClose={() => setModalOpen(false)}
+        form={form}
+        onSubmit={handleSubmit}
+        isEditing={!!editingItem}
+      />
+    </Card>
   );
 };
 

@@ -20,6 +20,7 @@ import {
 } from "../../../api/hooks/useOrder";
 import DeclinedModal from "./DeclinedModal";
 import AcceptedModal from "./AcceptedModal";
+import useUserStore from "../../../store/userStore";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -35,7 +36,7 @@ const Order = () => {
   const { data: orders, isLoading } = useGetOrders();
   const deleteOrder = useDeleteOrder();
   const updateOrder = useUpdateOrder();
-  console.log(orders)
+  const currency = useUserStore((state) => state.currency) || "Ks";
 
   const [updatingId, setUpdatingId] = useState(null);
   const [previewVisible, setPreviewVisible] = useState(false);
@@ -128,7 +129,7 @@ const Order = () => {
 
             return (
               <Text key={idx}>
-                • <strong>{name}</strong> × {item.quantity} = Ks{" "}
+                • <strong>{name}</strong> × {item.quantity} = {currency}{" "}
                 {total.toLocaleString()}
               </Text>
             );
@@ -141,7 +142,7 @@ const Order = () => {
       dataIndex: "totalAmount",
       render: (value) => (
         <Text strong style={{ color: "#1890ff" }}>
-          Ks {value.toLocaleString()}
+          {currency} {value.toLocaleString()}
         </Text>
       ),
     },
@@ -174,22 +175,23 @@ const Order = () => {
           </Tag>
           {record.paymentType === "Prepaid" && record.transactionScreenshot && (
             <Tooltip title="View Screenshot">
-              <Image
-                src={record.transactionScreenshot}
-                width={60}
-                height={60}
-                style={{
-                  objectFit: "cover",
-                  borderRadius: 8,
-                  border: "1px solid #eee",
-                }}
-                preview={false}
-                alt="Screenshot"
-                onClick={() => {
-                  setPreviewSrc(record.transactionScreenshot);
-                  setPreviewVisible(true);
-                }}
-              />
+              <div>
+                <Image
+                  src={record.transactionScreenshot}
+                  width={60}
+                  height={60}
+                  preview={false}
+                  style={{
+                    objectFit: "cover",
+                    borderRadius: 8,
+                    border: "1px solid #eee",
+                  }}
+                  onClick={() => {
+                    setPreviewSrc(record.transactionScreenshot);
+                    setPreviewVisible(true);
+                  }}
+                />
+              </div>
             </Tooltip>
           )}
         </Space>
@@ -257,9 +259,11 @@ const Order = () => {
           cancelText="No"
         >
           <Tooltip title="Delete Order">
-            <DeleteOutlined
-              style={{ color: "red", fontSize: 16, cursor: "pointer" }}
-            />
+            <span>
+              <DeleteOutlined
+                style={{ color: "red", fontSize: 16, cursor: "pointer" }}
+              />
+            </span>
           </Tooltip>
         </Popconfirm>
       ),

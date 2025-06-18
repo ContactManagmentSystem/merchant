@@ -8,6 +8,7 @@ const useUserStore = create(
   persist(
     (set) => ({
       userData: null,
+      currency: null, // fixed typo
 
       setUserData: (data) => {
         Cookies.set("auth-admin-token", data.token); // Set the auth-admin-token cookie
@@ -15,8 +16,12 @@ const useUserStore = create(
       },
 
       clearUserData: () => {
-        Cookies.remove("auth-admin-token"); 
-        set({ userData: null }); 
+        Cookies.remove("auth-admin-token");
+        set({ userData: null, currency: null }); // reset currency as well
+      },
+
+      setCurrency: (newCurrency) => {
+        set({ currency: newCurrency });
       },
     }),
     {

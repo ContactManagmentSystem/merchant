@@ -79,19 +79,16 @@ const LandingFormModal = ({
     formData.append("colourCode", values.colourCode);
     formData.append("currency", values.currency || "");
 
-    // Main image
     if (fileList.length > 0 && fileList[0].originFileObj) {
       formData.append("image", fileList[0].originFileObj);
     }
 
-    // Hero images
     heroFileList.forEach((file) => {
       if (file.originFileObj) {
         formData.append("heroImage", file.originFileObj);
       }
     });
 
-    // Deleted hero images
     if (deletedHeroImages.length > 0) {
       formData.append("deletedHeroImages", JSON.stringify(deletedHeroImages));
     }
@@ -117,8 +114,8 @@ const LandingFormModal = ({
         </Form.Item>
 
         <Form.Item
-          label="Primary Colour Code"
           name="colourCode"
+          label="Primary Colour Code"
           rules={[
             { required: true, message: "Colour code is required" },
             {
@@ -127,31 +124,30 @@ const LandingFormModal = ({
             },
           ]}
         >
-          <>
-            <HexColorPicker
-              color={colour}
-              onChange={(newColor) => {
-                const upperColor = newColor.toUpperCase();
-                setColour(upperColor);
-                form.setFieldsValue({ colourCode: upperColor });
-              }}
-            />
-            <Form.Item noStyle shouldUpdate>
-              {({ getFieldValue, setFieldsValue }) => (
-                <Input
-                  className="mt-2"
-                  value={getFieldValue("colourCode")}
-                  onChange={(e) => {
-                    const newColor = e.target.value.toUpperCase();
-                    setColour(newColor);
-                    setFieldsValue({ colourCode: newColor });
-                  }}
-                  placeholder="#000000"
-                />
-              )}
-            </Form.Item>
-          </>
+          <Input
+            value={colour}
+            onChange={(e) => {
+              const newColor = e.target.value.toUpperCase();
+              setColour(newColor);
+              form.setFieldsValue({ colourCode: newColor });
+            }}
+            placeholder="#000000"
+          />
         </Form.Item>
+
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ fontWeight: 500, display: "block", marginBottom: 8 }}>
+            Pick Color Visually
+          </label>
+          <HexColorPicker
+            color={colour}
+            onChange={(newColor) => {
+              const upperColor = newColor.toUpperCase();
+              setColour(upperColor);
+              form.setFieldsValue({ colourCode: upperColor });
+            }}
+          />
+        </div>
 
         <Form.Item
           name="currency"

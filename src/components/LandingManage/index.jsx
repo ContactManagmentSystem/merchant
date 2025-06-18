@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button, message, Alert, Form } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import {
@@ -8,6 +8,7 @@ import {
 } from "../../api/hooks/useService";
 import LandingFormModal from "./components/LandingForModal";
 import SocialLinkManager from "./components/SocialLinkManager";
+import useUserStore from "../../store/userStore";
 
 const LandingManagement = () => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -20,7 +21,14 @@ const LandingManagement = () => {
   const editLanding = useEditLanding();
 
   const landing = landingData?.data || null;
-  console.log(landing)
+
+  const setCurrency = useUserStore((state) => state.setCurrency);
+
+  useEffect(() => {
+    if (landing?.currency) {
+      setCurrency(landing.currency);
+    }
+  }, [landing, setCurrency]);
 
   const handleSubmit = (formData) => {
     const onSuccess = () => {
@@ -43,7 +51,7 @@ const LandingManagement = () => {
   };
 
   return (
-    <div className="p-6 bg-neutral-900 rounded shadow-lg max-w-5xl mx-auto mt-10 text-white">
+    <div className="p-6 bg-neutral-900 rounded shadow-lg max-w-5xl mx-auto mt-10 text-white flex flex-col gap-5">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Landing Management</h2>
         <Button
@@ -147,7 +155,7 @@ const LandingManagement = () => {
         heroFileList={heroFileList}
         setHeroFileList={setHeroFileList}
       />
-      <SocialLinkManager landingId={landing?._id}/>
+      <SocialLinkManager landingId={landing?._id} />
     </div>
   );
 };

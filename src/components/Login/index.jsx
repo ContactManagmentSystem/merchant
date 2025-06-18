@@ -1,37 +1,22 @@
-/* eslint-disable react/no-unescaped-entities */
+import { Form, Input, Button, Typography, Card } from "antd";
 import { IconHeartFilled } from "@tabler/icons-react";
-import { useLogin } from "../../api/hooks/useLogin";
-import { useForm } from "../../utils/useForm";
-import showToast from "../../utils/toast";
-import useUserStore from "../../store/userStore";
 import { useNavigate } from "react-router-dom";
+import { useLogin } from "../../api/hooks/useLogin";
+import useUserStore from "../../store/userStore";
+import showToast from "../../utils/toast";
+
+const { Title, Text } = Typography;
 
 const Login = () => {
-  const initialValues = { email: "", password: "" };
-  const { setUserData} = useUserStore();
-  // console.log(userData)
-  const nav = useNavigate()
-
-
-  // Validation function for the login form
-  const validate = (values) => {
-    const errors = {};
-    if (!values.email) errors.email = "Email is required";
-    if (!values.password) errors.password = "Password is required";
-    return errors;
-  };
-
-  const { formData, errors, handleChange, handleSubmit } = useForm(
-    initialValues,
-    validate
-  );
+  const [form] = Form.useForm();
+  const nav = useNavigate();
+  const { setUserData } = useUserStore();
 
   const loginMutation = useLogin({
     onSuccess: (data) => {
-      showToast.success("Login successful! Welcome back.");
+      showToast.success("Welcome back! Login successful.");
       setUserData(data.data);
-      nav('/dashboard/landing-manage')
-      // console.log(data.data);
+      nav("/dashboard/landing-manage");
     },
     onError: (error) => {
       showToast.error(
@@ -40,61 +25,66 @@ const Login = () => {
     },
   });
 
-  const { isLoading } = loginMutation;
-
-  const handleFormSubmit = (e) => {
-    handleSubmit(e, () => loginMutation.mutate(formData));
+  const onFinish = (values) => {
+    loginMutation.mutate(values);
   };
 
   return (
-    <form
-      className="w-full h-[100vh] flex flex-col gap-5 items-center py-10 p-5"
-      onSubmit={handleFormSubmit}
-    >
-      <div className="main-font text-secondary text-[30px] md:text-[100px] w-full self-start flex flex-wrap">
-        Welcome Back! <IconHeartFilled className="text-red-500" /> Let's have a
-        new experience
-      </div>
-      <div className="w-1/2 flex flex-col justify-center  gap-3 border p-3 rounded border-slate-300 shadow">
-        <div className="flex flex-col gap-2">
-          <label className="text-lg">Email</label>
-          <input
-            className="input"
-            type="email"
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4">
+      <Card
+        className="w-full max-w-md"
+        bordered={false}
+        style={{
+          borderRadius: "16px",
+          padding: "24px",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+        }}
+      >
+        <div className="text-center mb-6">
+          <Title level={2} className="!mb-1">
+            Welcome Back <IconHeartFilled className="inline text-red-500" />
+          </Title>
+          <Text type="secondary">Please log in to your account</Text>
+        </div>
+
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={onFinish}
+          autoComplete="off"
+        >
+          <Form.Item
+            label="Email"
             name="email"
-            value={formData.email}
-            onChange={handleChange}
-            aria-invalid={errors.email ? "true" : "false"}
-            required
-          />
-          {errors.email && (
-            <p role="alert" style={{ color: "red" }}>
-              {errors.email}
-            </p>
-          )}
-        </div>
-        <div className="flex flex-col gap-2">
-          <label className="text-lg">Password</label>
-          <input
-            className="input"
-            type="password"
+            rules={[
+              { required: true, message: "Please enter your email!" },
+              { type: "email", message: "Please enter a valid email!" },
+            ]}
+          >
+            <Input placeholder="e.g. john@example.com" allowClear />
+          </Form.Item>
+
+          <Form.Item
+            label="Password"
             name="password"
-            value={formData.password}
-            onChange={handleChange}
-            aria-invalid={errors.password ? "true" : "false"}
-            required
-          />
-          {errors.password && (
-            <p role="alert" style={{ color: "red" }}>
-              {errors.password}
-            </p>
-          )}
-        </div>
-        <button className="gradient-btn" type="submit" disabled={isLoading}>
-          {isLoading ? "Logging in..." : "Login"}
-        </button>
-      </div>
-    </form>
+            rules={[{ required: true, message: "Please enter your password!" }]}
+          >
+            <Input.Password placeholder="Enter your password" allowClear />
+          </Form.Item>
+
+          <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              block
+              loading={loginMutation.isLoading}
+            >
+              {loginMutation.isLoading ? "Logging in..." : "Login"}
+            </Button>
+          </Form.Item>
+        </Form>
+      </Card>
+    </div>
   );
 };
 
