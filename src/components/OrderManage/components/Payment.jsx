@@ -17,7 +17,6 @@ const Payment = () => {
   const editPayment = useEditPayment();
   const deletePayment = useDeletePayment();
 
-  // console.log(payments)
   const [modalVisible, setModalVisible] = useState(false);
   const [editData, setEditData] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -101,30 +100,33 @@ const Payment = () => {
   ];
 
   return (
-    <div className="p-4 max-w-6xl mx-auto">
-      <Card bordered={false} style={{ background: "#f9f9f9" }}>
-        <div className="flex items-center justify-between mb-4">
-          <Title level={3} style={{ margin: 0 }}>
+    <div className="px-4 py-6 max-w-screen-xl mx-auto">
+      <Card bordered={false} className="bg-white shadow-md rounded-lg">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+          <Title level={3} style={{ margin: 0 }} className="text-gray-800">
             My Payment Methods
           </Title>
           <Button
             type="primary"
             icon={<PlusOutlined />}
             onClick={openCreateModal}
+            className="w-full sm:w-auto"
           >
             Add New
           </Button>
         </div>
 
-        <Table
-          columns={columns}
-          dataSource={payments?.data}
-          rowKey="_id"
-          loading={isLoading}
-          bordered
-          pagination={{ pageSize: 5 }}
-          size="middle"
-        />
+        <div className="overflow-x-auto">
+          <Table
+            columns={columns}
+            dataSource={payments?.data}
+            rowKey="_id"
+            loading={isLoading}
+            bordered
+            pagination={{ pageSize: 5 }}
+            size="middle"
+          />
+        </div>
       </Card>
 
       <PaymentModal

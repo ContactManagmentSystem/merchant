@@ -19,7 +19,6 @@ const LandingManagement = () => {
   const { data: landingData, isLoading, isError, error } = useGetLanding();
   const createLanding = useCreateLanding();
   const editLanding = useEditLanding();
-
   const landing = landingData?.data || null;
 
   const setCurrency = useUserStore((state) => state.setCurrency);
@@ -42,7 +41,6 @@ const LandingManagement = () => {
       message.error("Error saving landing.");
     };
 
-    // Add upload progress tracking to config
     const finalConfig = {
       ...config,
       onUploadProgress: (e) => {
@@ -70,8 +68,8 @@ const LandingManagement = () => {
   };
 
   return (
-    <div className="p-6 bg-neutral-900 rounded shadow-lg max-w-5xl mx-auto mt-10 text-white flex flex-col gap-5">
-      <div className="flex justify-between items-center mb-6">
+    <div className="px-4 sm:px-6 lg:px-8 py-8 bg-neutral-900 rounded shadow-lg max-w-6xl mx-auto mt-10 text-white space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-2xl font-bold">Landing Management</h2>
         <Button
           type="primary"
@@ -92,15 +90,14 @@ const LandingManagement = () => {
           }
           type="warning"
           showIcon
-          className="mb-4"
         />
       ) : landing ? (
-        <div className="space-y-6 animate-fade-in">
+        <div className="space-y-8 animate-fade-in">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <div className="mb-4">
+            <div className="space-y-4">
+              <div>
                 <p className="font-semibold text-gray-300">Store Name:</p>
-                <div className="main-font text-white font-semibold break-words">
+                <div className="text-white font-semibold break-words">
                   {landing.storeName}
                 </div>
               </div>
@@ -115,7 +112,7 @@ const LandingManagement = () => {
                 </span>
               </div>
 
-              <div className="mt-4">
+              <div>
                 <p className="font-semibold text-gray-300">Currency:</p>
                 <div className="text-white">
                   {landing.currency || "Not set"}
@@ -124,13 +121,13 @@ const LandingManagement = () => {
             </div>
 
             <div>
-              <p className="mb-2 font-semibold text-gray-300">
+              <p className="font-semibold text-gray-300 mb-2">
                 Main Landing Image:
               </p>
               <img
                 src={landing.image}
                 alt="Landing Preview"
-                className="w-full rounded-lg shadow-md border object-cover max-h-72"
+                className="w-full max-h-72 rounded-lg shadow-md border object-cover"
               />
             </div>
           </div>
@@ -140,7 +137,7 @@ const LandingManagement = () => {
               <p className="font-semibold text-gray-300 mb-2 text-lg">
                 Hero Banner Images:
               </p>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {landing.heroImage.map((url, idx) => (
                   <img
                     key={idx}
@@ -159,7 +156,6 @@ const LandingManagement = () => {
           description="You haven't created a landing page yet. Click the 'Create Landing' button to get started."
           type="info"
           showIcon
-          className="mb-4"
         />
       )}
 
@@ -174,6 +170,7 @@ const LandingManagement = () => {
         heroFileList={heroFileList}
         setHeroFileList={setHeroFileList}
       />
+
       <SocialLinkManager landingId={landing?._id} />
     </div>
   );
