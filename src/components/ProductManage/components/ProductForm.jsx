@@ -1,5 +1,4 @@
 /* eslint-disable react/prop-types */
-// File: ProductForm.js
 import {
   Form,
   Input,
@@ -12,6 +11,7 @@ import {
 } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { useEffect, useState } from "react";
+import imageCompression from "browser-image-compression";
 import {
   useEditProduct,
   useCreateProduct,
@@ -59,87 +59,99 @@ const ProductForm = ({
     }
   }, [modalType, editingProduct, form, setFileList]);
 
-  const handleSave = () => {
-    form
-      .validateFields()
-      .then((values) => {
-        const formData = new FormData();
-        formData.append("name", values.name);
-        formData.append("discountPrice", values.discountPrice);
-        formData.append("description", values.description);
-        formData.append("category", values.categoryId);
-        formData.append("price", values.salePrice);
-        formData.append("stockCount", values.stockCount);
-
-        fileList.forEach((file) => {
-          if (file.originFileObj) {
-            formData.append("productImage", file.originFileObj);
-          }
-        });
-
-        formData.append("deletedImages", JSON.stringify(deletedImages));
-
-        const config = {
-          onUploadProgress: (e) => {
-            const percent = Math.round((e.loaded * 100) / e.total);
-            message.open({
-              key: "product-upload",
-              type: "loading",
-              content: `Uploading... ${percent}%`,
-              duration: 0,
-            });
-          },
+  const compressIfLarge = async (file) => {
+    if (file.size > 500 * 1024) {
+      try {
+        const options = {
+          maxSizeMB: 0.5,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
         };
+        const compressed = await imageCompression(file, options);
+        message.success(`${file.name} compressed.`);
+        return compressed;
+      } catch (err) {
+        console.error("Compression failed", err);
+        message.warning(`Compression failed for ${file.name}`);
+        return file;
+      }
+    }
+    return file;
+  };
 
-        setUploading(true);
+  const handleSave = async () => {
+    try {
+      const values = await form.validateFields();
+      const formData = new FormData();
+      formData.append("name", values.name);
+      formData.append("discountPrice", values.discountPrice);
+      formData.append("description", values.description);
+      formData.append("category", values.categoryId);
+      formData.append("price", values.salePrice);
+      formData.append("stockCount", values.stockCount);
 
-        if (modalType === "edit" && editingProduct) {
-          editProduct.mutate(
-            {
-              productId: editingProduct._id,
-              productData: formData,
-              config,
-            },
-            {
-              onSuccess: () => {
-                message.destroy("product-upload");
-                message.success("Product updated successfully");
-                setModalVisible(false);
-                setUploading(false);
-              },
-              onError: (err) => {
-                message.destroy("product-upload");
-                message.error(`Error: ${err.message}`);
-                setUploading(false);
-              },
-            }
-          );
-        } else {
-          addProduct.mutate(
-            { data: formData, config },
-            {
-              onSuccess: () => {
-                message.destroy("product-upload");
-                message.success("Product added successfully");
-                form.resetFields();
-                setFileList([]);
-                setDeletedImages([]);
-                setModalVisible(false);
-                setUploading(false);
-              },
-              onError: (err) => {
-                message.destroy("product-upload");
-                message.error(`Error: ${err.message}`);
-                setUploading(false);
-              },
-            }
-          );
+      for (const file of fileList) {
+        if (file.originFileObj) {
+          const finalFile = await compressIfLarge(file.originFileObj);
+          formData.append("productImage", finalFile);
         }
-      })
-      .catch((info) => {
-        message.error("Validation Failed:", info);
+      }
+
+      if (deletedImages.length > 0) {
+        formData.append("deletedImages", JSON.stringify(deletedImages));
+      }
+
+      const config = {
+        onUploadProgress: (e) => {
+          const percent = Math.round((e.loaded * 100) / e.total);
+          message.open({
+            key: "product-upload",
+            type: "loading",
+            content: `Uploading... ${percent}%`,
+            duration: 0,
+          });
+        },
+      };
+
+      setUploading(true);
+
+      const onSuccess = () => {
+        message.destroy("product-upload");
+        message.success(
+          modalType === "edit"
+            ? "Product updated successfully"
+            : "Product added successfully"
+        );
+        setModalVisible(false);
         setUploading(false);
-      });
+        form.resetFields();
+        setFileList([]);
+        setDeletedImages([]);
+      };
+
+      const onError = (err) => {
+        message.destroy("product-upload");
+        message.error(`Error: ${err.message}`);
+        setUploading(false);
+      };
+
+      if (modalType === "edit" && editingProduct) {
+        editProduct.mutate(
+          {
+            productId: editingProduct._id,
+            productData: formData,
+            config,
+          },
+          { onSuccess, onError }
+        );
+      } else {
+        addProduct.mutate({ data: formData, config }, { onSuccess, onError });
+      }
+    } catch (info) {
+      console.log(info)
+      message.error("Validation Failed");
+      setUploading(false);
+    }
   };
 
   return (
@@ -147,9 +159,7 @@ const ProductForm = ({
       form={form}
       layout="vertical"
       onFinish={handleSave}
-      initialValues={{
-        discountPrice: 0,
-      }}
+      initialValues={{ discountPrice: 0 }}
     >
       <Row gutter={16}>
         <Col span={12}>
@@ -247,7 +257,7 @@ const ProductForm = ({
               message.error("You can upload up to 5 images only.");
               return Upload.LIST_IGNORE;
             }
-            return false; // prevent automatic upload
+            return false;
           }}
           multiple
         >

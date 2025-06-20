@@ -79,11 +79,25 @@ const handleSave = async () => {
     formData.append("description", values.description);
 
     if (fileList[0]?.originFileObj) {
-      const compressed = await imageCompression(fileList[0].originFileObj, {
-        maxSizeMB: 1,
-        maxWidthOrHeight: 1920,
-      });
-      formData.append("categoryImage", compressed);
+      const originalFile = fileList[0].originFileObj;
+
+      let finalFile = originalFile;
+
+      if (originalFile.size > 500 * 1024) {
+        try {
+          finalFile = await imageCompression(originalFile, {
+            maxSizeMB: 0.5,
+            maxWidthOrHeight: 1280,
+            useWebWorker: true,
+          });
+          message.success(`${originalFile.name} compressed`);
+        } catch (err) {
+          console.error("Compression failed", err);
+          message.warning("Image compression failed. Uploading original.");
+        }
+      }
+
+      formData.append("categoryImage", finalFile);
     }
 
     const config = {
@@ -100,6 +114,18 @@ const handleSave = async () => {
 
     setUploading(true);
 
+    const successHandler = (msg) => {
+      message.destroy("upload");
+      message.success(msg);
+      setModalVisible(false);
+      setUploading(false);
+    };
+
+    const errorHandler = () => {
+      message.destroy("upload");
+      setUploading(false);
+    };
+
     if (editingCategory) {
       editCategory.mutate(
         {
@@ -108,32 +134,16 @@ const handleSave = async () => {
           config,
         },
         {
-          onSuccess: () => {
-            message.destroy("upload");
-            message.success("Category updated");
-            setModalVisible(false);
-            setUploading(false);
-          },
-          onError: () => {
-            message.destroy("upload");
-            setUploading(false);
-          },
+          onSuccess: () => successHandler("Category updated"),
+          onError: errorHandler,
         }
       );
     } else {
       createCategory.mutate(
         { data: formData, config },
         {
-          onSuccess: () => {
-            message.destroy("upload");
-            message.success("Category created");
-            setModalVisible(false);
-            setUploading(false);
-          },
-          onError: () => {
-            message.destroy("upload");
-            setUploading(false);
-          },
+          onSuccess: () => successHandler("Category created"),
+          onError: errorHandler,
         }
       );
     }

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Modal, Form, Input, Upload, Button, message } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { HexColorPicker } from "react-colorful";
+import imageCompression from "browser-image-compression";
 
 const LandingFormModal = ({
   open,
@@ -65,12 +66,69 @@ const LandingFormModal = ({
     }
   }, [open, landing, form, setFileList, setHeroFileList]);
 
-  const handleHeroImageChange = ({ fileList: newList, file }) => {
+  const compressIfLarge = async (file) => {
+    if (file.size > 500 * 1024) {
+      try {
+        const options = {
+          maxSizeMB: 0.5,
+          maxWidthOrHeight: 1280,
+          useWebWorker: true,
+        };
+        const compressed = await imageCompression(file, options);
+        message.success(`${file.name} compressed.`);
+        return compressed;
+      } catch (err) {
+        console.log(err)
+        message.error("Compression failed.");
+        return file;
+      }
+    }
+    return file;
+  };
+
+  const handleMainImageChange = async ({ fileList: newList }) => {
+    const latest = newList.slice(-1)[0];
+    if (!latest?.originFileObj) {
+      setFileList(newList);
+      return;
+    }
+
+    const compressed = await compressIfLarge(latest.originFileObj);
+    compressed.preview = URL.createObjectURL(compressed);
+
+    setFileList([
+      {
+        ...latest,
+        originFileObj: compressed,
+        name: compressed.name,
+        preview: compressed.preview,
+      },
+    ]);
+  };
+
+  const handleHeroImageChange = async ({ fileList: newList, file }) => {
     const removed = heroFileList.find((f) => f.uid === file.uid);
     if (removed?.isExisting && !newList.find((f) => f.uid === file.uid)) {
       setDeletedHeroImages((prev) => [...prev, removed.url]);
     }
-    setHeroFileList(newList);
+
+    const compressedList = await Promise.all(
+      newList.map(async (f) => {
+        if (f.originFileObj) {
+          const compressed = await compressIfLarge(f.originFileObj);
+          compressed.preview = URL.createObjectURL(compressed);
+          return {
+            ...f,
+            originFileObj: compressed,
+            name: compressed.name,
+            preview: compressed.preview,
+          };
+        }
+        return f;
+      })
+    );
+
+    setHeroFileList(compressedList);
   };
 
   const handleFinish = (values) => {
@@ -162,8 +220,8 @@ const LandingFormModal = ({
         </div>
 
         <Form.Item
-          name="currency"
           label="Currency (e.g., MMK, USD)"
+          name="currency"
           rules={[{ required: true, message: "Currency is required" }]}
         >
           <Input placeholder="Enter currency symbol or code" />
@@ -177,7 +235,7 @@ const LandingFormModal = ({
           <Upload
             listType="picture"
             fileList={fileList}
-            onChange={({ fileList }) => setFileList(fileList)}
+            onChange={handleMainImageChange}
             beforeUpload={() => false}
             maxCount={1}
             accept="image/*"
