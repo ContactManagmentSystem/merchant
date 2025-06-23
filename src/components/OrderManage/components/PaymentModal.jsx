@@ -3,7 +3,7 @@ import { Modal, Form, Input, Button } from "antd";
 import { useEffect } from "react";
 
 const PaymentModal = ({ visible, onClose, initialData, onSubmit, loading }) => {
-  const [form] = Form.useForm(); // create form instance
+  const [form] = Form.useForm(); 
 
   useEffect(() => {
     if (visible) {

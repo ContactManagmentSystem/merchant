@@ -88,7 +88,6 @@ export const useEditLanding = () => {
 // ============================
 // PAYMENT CRUD
 // ============================
-
 export const useGetPayments = (page = 1, limit = 10) => {
   return useQuery({
     queryKey: ["payment", page, limit],
@@ -99,9 +98,9 @@ export const useGetPayments = (page = 1, limit = 10) => {
 export const useCreatePayment = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ data, config }) => createData("payment", data, config),
+    mutationFn: (data) => createData("payment", data), // No need for config here unless required
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["payment"] });
+      queryClient.invalidateQueries({ queryKey: ["payment"] }); // Invalidate the payments query to refetch data
     },
   });
 };
@@ -109,8 +108,8 @@ export const useCreatePayment = () => {
 export const useEditPayment = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ paymentId, paymentData, config }) =>
-      editData("payment", paymentId, paymentData, config),
+    mutationFn: ({ paymentId, paymentData }) =>
+      editData("payment", paymentId, paymentData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["payment"] });
     },
