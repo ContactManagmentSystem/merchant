@@ -78,8 +78,8 @@ const LandingFormModal = ({
         message.success(`${file.name} compressed.`);
         return compressed;
       } catch (err) {
-        console.log(err)
-        message.error("Compression failed.");
+        // console.log(err)
+        message.error(err?.response?.data.message);
         return file;
       }
     }

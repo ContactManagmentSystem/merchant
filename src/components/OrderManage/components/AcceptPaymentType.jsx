@@ -13,7 +13,7 @@ const AcceptPaymentType = () => {
   const { data: landingData, isLoading, isError } = useGetLanding();
   const { mutate: updatePaymentTypes, isPending } =
     useUpdateLandingPaymentTypes();
-console.log(landingData)
+  // console.log(landingData);
   useEffect(() => {
     if (landingData?.data?.acceptPaymentTypes?.length) {
       setSelectedTypes(landingData?.data.acceptPaymentTypes);

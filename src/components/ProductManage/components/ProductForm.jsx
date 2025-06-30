@@ -131,7 +131,7 @@ const ProductForm = ({
 
       const onError = (err) => {
         message.destroy("product-upload");
-        message.error(`Error: ${err.message}`);
+        message.error(err?.response?.data.message);
         setUploading(false);
       };
 
@@ -148,7 +148,7 @@ const ProductForm = ({
         addProduct.mutate({ data: formData, config }, { onSuccess, onError });
       }
     } catch (info) {
-      console.log(info)
+      console.log(info);
       message.error("Validation Failed");
       setUploading(false);
     }
@@ -271,10 +271,17 @@ const ProductForm = ({
       </Form.Item>
 
       <Form.Item>
-        <Button type="primary" htmlType="submit" block loading={uploading}>
+        <Button 
+          type="primary" 
+          htmlType="submit" 
+          block 
+          loading={uploading}
+          disabled={fileList.length === 0} 
+        >
           {modalType === "edit" ? "Save Product" : "Add Product"}
         </Button>
       </Form.Item>
+      
     </Form>
   );
 };

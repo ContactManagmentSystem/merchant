@@ -63,6 +63,7 @@ const Order = () => {
 
   const submitProgressChange = async (id, progress, reasonOrCode = "") => {
     try {
+
       setUpdatingId(id);
       const orderData = { progress };
 
@@ -72,14 +73,15 @@ const Order = () => {
 
       await updateOrder.mutateAsync({ orderId: id, orderData });
       message.success("Order updated.");
-    } catch {
-      message.error("Failed to update order.");
+    } catch (err) {
+      // console.log(err)
+      message.error(err?.response?.data.message);
     } finally {
       setUpdatingId(null);
       setIsReasonModalVisible(false);
-      setIsAcceptedModalVisible(false);
+      // setIsAcceptedModalVisible(false);
       setReasonText("");
-      setOrderCodeInput("");
+      // setOrderCodeInput("");
     }
   };
 
@@ -272,7 +274,7 @@ const Order = () => {
 
   return (
     <div className="p-4 max-w-7xl mx-auto">
-      <Card bordered={false} style={{ background: "#ffffff" }}>
+      <Card variant={false} style={{ background: "#ffffff" }}>
         <Title level={3} className="mb-6 text-center">
           🧾 Orders Overview
         </Title>
