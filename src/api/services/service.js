@@ -101,7 +101,7 @@ export const getPackData = async (
 
 export const createData = async (path, productData, config = {}) => {
   try {
-    console.log(productData)
+    // console.log(productData)
     const response = await axiosInstance.post(`/${path}`, productData, config);
     return response.data;
   } catch (error) {

@@ -1,9 +1,57 @@
 /* eslint-disable react/prop-types */
 import { Modal, Form, Input, Select, Button } from "antd";
+import { useState, useEffect } from "react";
+import {
+  FacebookFilled,
+  TwitterSquareFilled,
+  InstagramFilled,
+  LinkedinFilled,
+  WhatsAppOutlined,
+  MailOutlined,
+  PhoneOutlined,
+  SendOutlined,
+  MessageOutlined,
+  LineOutlined,
+} from "@ant-design/icons";
+import { motion } from "framer-motion";
 
 const { Option } = Select;
 
+// Icon options for social media platforms
+const iconOptions = [
+  { name: "Facebook", icon: <FacebookFilled style={{ fontSize: "24px", color: "#3b5998" }} /> },
+  { name: "Twitter", icon: <TwitterSquareFilled style={{ fontSize: "24px", color: "#00acee" }} /> },
+  { name: "Instagram", icon: <InstagramFilled style={{ fontSize: "24px", color: "#e1306c" }} /> },
+  { name: "LinkedIn", icon: <LinkedinFilled style={{ fontSize: "24px", color: "#0077b5" }} /> },
+  { name: "WhatsApp", icon: <WhatsAppOutlined style={{ fontSize: "24px", color: "#25d366" }} /> },
+  { name: "Email", icon: <MailOutlined style={{ fontSize: "24px", color: "#c13584" }} /> },
+  { name: "Phone", icon: <PhoneOutlined style={{ fontSize: "24px", color: "#34b7f1" }} /> },
+  { name: "Telegram", icon: <SendOutlined style={{ fontSize: "24px", color: "#0088cc" }} /> },
+  { name: "Messenger", icon: <MessageOutlined style={{ fontSize: "24px", color: "#0084ff" }} /> },
+  { name: "Line", icon: <LineOutlined style={{ fontSize: "24px", color: "#00c300" }} /> },
+];
+
 const SocialLinkModal = ({ open, onClose, form, onSubmit, isEditing }) => {
+  const [selectedIcon, setSelectedIcon] = useState(null);
+
+  const normalizeIconName = (iconName) => iconName?.replace(/Logo$/, ''); // Remove "Logo" suffix if present
+
+  useEffect(() => {
+    if (open) {
+      const icon = form.getFieldValue("icon");
+      const normalizedIcon = normalizeIconName(icon);
+      const matchedIcon = iconOptions.find(item => item.name === normalizedIcon);
+      setSelectedIcon(matchedIcon ? matchedIcon.name : null);
+    } else {
+      setSelectedIcon(null);
+    }
+  }, [open, form]);
+
+  const handleIconClick = (iconName) => {
+    form.setFieldsValue({ icon: iconName });
+    setSelectedIcon(iconName); 
+  };
+
   return (
     <Modal
       open={open}
@@ -11,23 +59,20 @@ const SocialLinkModal = ({ open, onClose, form, onSubmit, isEditing }) => {
       footer={null}
       destroyOnHidden={false}
       centered
-      title={
-        <span className="text-lg font-semibold">
-          {isEditing ? "Edit Social Media Link" : "Add Social Media Link"}
-        </span>
-      }
+      title={isEditing ? "Edit Social Media Link" : "Add Social Media Link"}
+      width={600}
     >
       <Form form={form} layout="vertical" onFinish={onSubmit}>
+        {/* Platform Name Field */}
         <Form.Item
           name="name"
           label="Platform Name"
-          rules={[
-            { required: true, message: "Please enter the platform name" },
-          ]}
+          rules={[{ required: true, message: "Please enter the platform name" }]}
         >
           <Input placeholder="e.g., Telegram, Facebook, WhatsApp" />
         </Form.Item>
 
+        {/* Redirect Type Field */}
         <Form.Item
           name="redirectType"
           label="Redirect Type"
@@ -40,6 +85,7 @@ const SocialLinkModal = ({ open, onClose, form, onSubmit, isEditing }) => {
           </Select>
         </Form.Item>
 
+        {/* Dynamic Link Field based on Redirect Type */}
         <Form.Item shouldUpdate>
           {({ getFieldValue }) => {
             const type = getFieldValue("redirectType");
@@ -69,14 +115,30 @@ const SocialLinkModal = ({ open, onClose, form, onSubmit, isEditing }) => {
           }}
         </Form.Item>
 
+        {/* Icon Selection */}
         <Form.Item
           name="icon"
-          label="Icon Identifier"
-          rules={[{ required: true, message: "Please enter the icon name" }]}
+          label="Choose an Icon"
+          rules={[{ required: true, message: "Please select an icon" }]}
         >
-          <Input placeholder="e.g., TelegramLogo, FacebookLogo" />
+          <div className="grid grid-cols-4 gap-4 justify-center">
+            {iconOptions.map((item) => (
+              <motion.div
+                key={item.name}
+                className={`cursor-pointer p-4 border-2 rounded-xl transition-all duration-300 ease-in-out transform ${
+                  selectedIcon === item.name
+                    ? "border-blue-500 bg-blue-100 scale-110"  // Highlight selected icon
+                    : "border-gray-300 hover:bg-gray-100"
+                }`}
+                onClick={() => handleIconClick(item.name)}  // Handle icon selection
+              >
+                {item.icon}
+              </motion.div>
+            ))}
+          </div>
         </Form.Item>
 
+        {/* Submit Button */}
         <Form.Item>
           <Button type="primary" htmlType="submit" block>
             {isEditing ? "Update Link" : "Add Link"}

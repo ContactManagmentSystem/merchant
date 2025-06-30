@@ -141,24 +141,31 @@ export const useGetSocialLinks = (landingId) => {
 export const useCreateSocialLink = (landingId) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ data, config }) =>
-      createData(`social/${landingId}`, data, config), // POST /social/:landingId
+    mutationFn: ({ data }) => {
+      // console.log("Creating social link with data:", data); 
+      return createData(`social/${landingId}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["socialLinks", landingId] });
+    },
+    onError: (error) => {
+      console.error("Error in create social link:", error);
+    },
+  });
+};
+
+
+export const useEditSocialLink = (landingId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ socialLinkId, socialLinkData }) =>
+      editData(`social`, socialLinkId, socialLinkData), 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["socialLinks", landingId] });
     },
   });
 };
 
-export const useEditSocialLink = (landingId) => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ socialLinkId, socialLinkData, config }) =>
-      editData(`social`, socialLinkId, socialLinkData, config), // PUT /social/:socialLinkId
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["socialLinks", landingId] });
-    },
-  });
-};
 
 export const useDeleteSocialLink = (landingId) => {
   const queryClient = useQueryClient();

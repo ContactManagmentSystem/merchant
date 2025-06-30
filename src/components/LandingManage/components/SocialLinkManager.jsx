@@ -26,13 +26,17 @@ const SocialLinkManager = ({ landingId }) => {
   const deleteSocialLink = useDeleteSocialLink(landingId);
   const editSocialLink = useEditSocialLink(landingId);
 
+  // Open the modal for creating a new link
   const openCreateModal = () => {
-    setEditingItem(null);
-    form.resetFields();
-    setModalOpen(true);
+    setEditingItem(null);  // No item to edit, so reset editing state
+    form.resetFields();    // Reset form fields
+    setModalOpen(true);     // Open the modal for adding a new social link
   };
 
+  // Open the modal for editing an existing link
   const openEditModal = (item) => {
+    // Pre-fill form with the existing data when editing
+    console.log(item)
     form.setFieldsValue({
       name: item.name,
       link: item.link.replace(/^mailto:|tel:/, ""),
@@ -41,38 +45,56 @@ const SocialLinkManager = ({ landingId }) => {
         ? "email"
         : item.link.startsWith("tel:")
         ? "phone"
-        : "url",
+        : "url",  // Automatically detect the link type
     });
-    setEditingItem(item);
-    setModalOpen(true);
+
+    setEditingItem(item);  // Store the item being edited
+    setModalOpen(true);     // Open the modal for editing
   };
 
-  const handleSubmit = (values) => {
+  // Handle deleting a social link
+  const handleDelete = async (id) => {
+    try {
+      await deleteSocialLink.mutateAsync(id);  // Call API to delete the link
+      message.success("Link deleted");  // Show success message
+      refetch();  // Refresh the list
+    } catch (error) {
+      message.error("Delete failed");  // Show error message
+      console.error("Delete failed: ", error);
+    }
+  };
+
+  // Handle form submission (for both create and edit)
+  const handleSubmit = async (values) => {
     const { name, link, icon, redirectType } = values;
     let finalLink = link;
 
+    // Prepend the appropriate scheme to the link based on the redirect type
     if (redirectType === "email") finalLink = `mailto:${link}`;
     if (redirectType === "phone") finalLink = `tel:${link}`;
 
     const payload = { name, link: finalLink, icon };
 
-    const onSuccess = () => {
-      message.success(editingItem ? "Link updated" : "Link added");
-      setModalOpen(false);
-      form.resetFields();
-      setEditingItem(null);
-      refetch();
-    };
-
-    const onError = () => message.error("Operation failed");
-
-    if (editingItem) {
-      editSocialLink.mutate(
-        { socialLinkId: editingItem._id, socialLinkData: payload },
-        { onSuccess, onError }
-      );
-    } else {
-      createSocialLink.mutate(payload, { onSuccess, onError });
+    try {
+      if (editingItem) {
+        // If we are editing an existing link, call the edit API
+        await editSocialLink.mutateAsync({
+          socialLinkId: editingItem._id,
+          socialLinkData: payload,
+        });
+        message.success("Link updated");
+      } else {
+        // If we are creating a new link, call the create API
+        createSocialLink.mutate({ data: payload });
+        message.success("Link added");
+      }
+      setModalOpen(false);   // Close the modal after successful submission
+      form.resetFields();    // Reset the form for next use
+      setEditingItem(null);   // Clear the editing state
+      refetch();             // Refresh the list of social links
+    } catch (error) {
+      message.error("Operation failed");  // Show error message
+      console.error("Submit error: ", error);
     }
   };
 
@@ -117,22 +139,14 @@ const SocialLinkManager = ({ landingId }) => {
               <Tooltip title="Edit">
                 <Button
                   icon={<EditOutlined />}
-                  onClick={() => openEditModal(item)}
+                  onClick={() => openEditModal(item)}  // Open the edit modal
                 />
               </Tooltip>,
               <Tooltip title="Delete">
                 <Button
                   icon={<DeleteOutlined />}
                   danger
-                  onClick={() =>
-                    deleteSocialLink.mutate(item._id, {
-                      onSuccess: () => {
-                        message.success("Link deleted");
-                        refetch();
-                      },
-                      onError: () => message.error("Delete failed"),
-                    })
-                  }
+                  onClick={() => handleDelete(item._id)}  // Delete the social link
                 />
               </Tooltip>,
             ]}
@@ -149,10 +163,10 @@ const SocialLinkManager = ({ landingId }) => {
       {/* Modal Component */}
       <SocialLinkModal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        form={form}
-        onSubmit={handleSubmit}
-        isEditing={!!editingItem}
+        onClose={() => setModalOpen(false)}  // Close the modal
+        form={form}  // Pass the form to the modal
+        onSubmit={handleSubmit}  // Handle form submission
+        isEditing={!!editingItem}  // Check if we're editing an existing item
       />
     </Card>
   );
