@@ -9,11 +9,13 @@ import {
   WhatsappLogo,
   Envelope,
   Phone,
-  Chat,
   TelegramLogo,
   MessengerLogo,
+  YoutubeLogo,
 } from "phosphor-react";
 import { motion } from "framer-motion";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faLine, faViber } from "@fortawesome/free-brands-svg-icons";
 
 const { Option } = Select;
 
@@ -56,8 +58,28 @@ const iconOptions = [
     icon: <MessengerLogo style={{ fontSize: "24px", color: "#0084ff" }} />,
   },
   {
+    name: "YouTube",
+    icon: (
+      <YoutubeLogo size={32} style={{ fontSize: "24px", color: "#0084ff" }} />
+    ),
+  },
+  {
+    name: "Viber",
+    icon: (
+      <FontAwesomeIcon
+        icon={faViber}
+        style={{ fontSize: "24px", color: "#7360f2" }}
+      />
+    ),
+  },
+  {
     name: "Line",
-    icon: <Chat style={{ fontSize: "24px", color: "#00c300" }} />,
+    icon: (
+      <FontAwesomeIcon
+        icon={faLine}
+        style={{ fontSize: "24px", color: "#25d366" }}
+      />
+    ),
   },
 ];
 
@@ -159,7 +181,7 @@ const SocialLinkModal = ({ open, onClose, form, onSubmit, isEditing }) => {
             {iconOptions.map((item) => (
               <motion.div
                 key={item.name}
-                className={`cursor-pointer p-4 border-2 rounded-xl transition-all duration-300 ease-in-out transform ${
+                className={`cursor-pointer p-4 border-2 flex justify-center rounded-xl transition-all duration-300 ease-in-out transform ${
                   selectedIcon === item.name
                     ? "border-blue-500 bg-blue-100 scale-110" // Highlight selected icon
                     : "border-gray-300 hover:bg-gray-100"

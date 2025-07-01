@@ -78,12 +78,52 @@ const LandingFormModal = ({
         message.success(`${file.name} compressed.`);
         return compressed;
       } catch (err) {
-        // console.log(err)
-        message.error(err?.response?.data.message);
+        console.log(err)
+        message.error("Compression failed.");
         return file;
       }
     }
     return file;
+  };
+
+  // Convert to PNG/JPEG if the file is not PNG or JPEG
+  const convertToImage = (file) => {
+    return new Promise((resolve, reject) => {
+      if (["image/jpeg", "image/png"].includes(file.type)) {
+        resolve(file); // Already a valid image
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+
+        img.onload = async () => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+
+          // Convert to PNG or JPEG
+          const convertedDataUrl = canvas.toDataURL("image/png"); // Change to image/jpeg for JPEG
+          const response = await fetch(convertedDataUrl);
+          const blob = await response.blob();
+
+          const convertedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".png"), {
+            type: "image/png",
+          });
+
+          resolve(convertedFile);
+        };
+
+        img.onerror = reject;
+      };
+
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleMainImageChange = async ({ fileList: newList }) => {
@@ -93,7 +133,9 @@ const LandingFormModal = ({
       return;
     }
 
-    const compressed = await compressIfLarge(latest.originFileObj);
+    let file = latest.originFileObj;
+    file = await convertToImage(file); // Convert to PNG/JPEG if necessary
+    const compressed = await compressIfLarge(file);
     compressed.preview = URL.createObjectURL(compressed);
 
     setFileList([
@@ -115,7 +157,9 @@ const LandingFormModal = ({
     const compressedList = await Promise.all(
       newList.map(async (f) => {
         if (f.originFileObj) {
-          const compressed = await compressIfLarge(f.originFileObj);
+          let file = f.originFileObj;
+          file = await convertToImage(file); // Convert to PNG/JPEG if necessary
+          const compressed = await compressIfLarge(file);
           compressed.preview = URL.createObjectURL(compressed);
           return {
             ...f,

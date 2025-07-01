@@ -1,4 +1,3 @@
-/* File: Category.js */
 import { useState } from "react";
 import {
   Table,
@@ -71,89 +70,140 @@ const Category = () => {
     });
   };
 
-const handleSave = async () => {
-  try {
-    const values = await form.validateFields();
-    const formData = new FormData();
-    formData.append("name", values.name);
-    formData.append("description", values.description);
-
-    if (fileList[0]?.originFileObj) {
-      const originalFile = fileList[0].originFileObj;
-
-      let finalFile = originalFile;
-
-      if (originalFile.size > 500 * 1024) {
-        try {
-          finalFile = await imageCompression(originalFile, {
-            maxSizeMB: 0.5,
-            maxWidthOrHeight: 1280,
-            useWebWorker: true,
-          });
-          message.success(`${originalFile.name} compressed`);
-        } catch (err) {
-          console.error("Compression failed", err);
-          message.warning("Image compression failed. Uploading original.");
-        }
+  // Convert to PNG/JPEG if the file is not PNG or JPEG
+  const convertToImage = (file) => {
+    return new Promise((resolve, reject) => {
+      if (["image/jpeg", "image/png"].includes(file.type)) {
+        resolve(file); // Already a valid image
+        return;
       }
 
-      formData.append("categoryImage", finalFile);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+
+        img.onload = async () => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+
+          // Convert to PNG or JPEG
+          const convertedDataUrl = canvas.toDataURL("image/png"); // Change to image/jpeg for JPEG conversion
+          const response = await fetch(convertedDataUrl);
+          const blob = await response.blob();
+
+          const convertedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".png"), {
+            type: "image/png",
+          });
+
+          resolve(convertedFile);
+        };
+
+        img.onerror = reject;
+      };
+
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const compressIfLarge = async (file) => {
+    if (file.size > 500 * 1024) {
+      try {
+        const options = {
+          maxSizeMB: 0.5,
+          maxWidthOrHeight: 1280,
+          useWebWorker: true,
+        };
+        const compressed = await imageCompression(file, options);
+        message.success(`${file.name} compressed.`);
+        return compressed;
+      } catch (err) {
+        console.error("Compression failed", err);
+        message.warning("Compression failed. Uploading original.");
+        return file;
+      }
     }
+    return file;
+  };
 
-    const config = {
-      onUploadProgress: (e) => {
-        const percent = Math.round((e.loaded * 100) / e.total);
-        message.open({
-          key: "upload",
-          type: "loading",
-          content: `Uploading... ${percent}%`,
-          duration: 0,
-        });
-      },
-    };
+  const handleSave = async () => {
+    try {
+      const values = await form.validateFields();
+      const formData = new FormData();
+      formData.append("name", values.name);
+      formData.append("description", values.description);
 
-    setUploading(true);
+      if (fileList[0]?.originFileObj) {
+        const originalFile = fileList[0].originFileObj;
 
-    const successHandler = (msg) => {
-      message.destroy("upload");
-      message.success(msg);
-      setModalVisible(false);
-      setUploading(false);
-    };
+        let finalFile = originalFile;
 
-    const errorHandler = () => {
-      message.destroy("upload");
-      setUploading(false);
-    };
+        // Convert to PNG/JPEG if necessary
+        finalFile = await convertToImage(finalFile);
 
-    if (editingCategory) {
-      editCategory.mutate(
-        {
-          categoryId: editingCategory._id,
-          categoryData: formData,
-          config,
+        // Compress the image if it's large
+        finalFile = await compressIfLarge(finalFile);
+
+        formData.append("categoryImage", finalFile);
+      }
+
+      const config = {
+        onUploadProgress: (e) => {
+          const percent = Math.round((e.loaded * 100) / e.total);
+          message.open({
+            key: "upload",
+            type: "loading",
+            content: `Uploading... ${percent}%`,
+            duration: 0,
+          });
         },
-        {
-          onSuccess: () => successHandler("Category updated"),
-          onError: errorHandler,
-        }
-      );
-    } else {
-      createCategory.mutate(
-        { data: formData, config },
-        {
-          onSuccess: () => successHandler("Category created"),
-          onError: errorHandler,
-        }
-      );
-    }
-  } catch (err) {
-    console.error(err);
-    message.destroy("upload");
-    setUploading(false);
-  }
-};
+      };
 
+      setUploading(true);
+
+      const successHandler = (msg) => {
+        message.destroy("upload");
+        message.success(msg);
+        setModalVisible(false);
+        setUploading(false);
+      };
+
+      const errorHandler = () => {
+        message.destroy("upload");
+        setUploading(false);
+      };
+
+      if (editingCategory) {
+        editCategory.mutate(
+          {
+            categoryId: editingCategory._id,
+            categoryData: formData,
+            config,
+          },
+          {
+            onSuccess: () => successHandler("Category updated"),
+            onError: errorHandler,
+          }
+        );
+      } else {
+        createCategory.mutate(
+          { data: formData, config },
+          {
+            onSuccess: () => successHandler("Category created"),
+            onError: errorHandler,
+          }
+        );
+      }
+    } catch (err) {
+      console.error(err);
+      message.destroy("upload");
+      setUploading(false);
+    }
+  };
 
   const columns = [
     {

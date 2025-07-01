@@ -79,6 +79,46 @@ const ProductForm = ({
     return file;
   };
 
+  // Convert to PNG/JPEG if the file is not PNG or JPEG
+  const convertToImage = (file) => {
+    return new Promise((resolve, reject) => {
+      if (["image/jpeg", "image/png"].includes(file.type)) {
+        resolve(file); // Already a valid image
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+
+        img.onload = async () => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+
+          // Convert to PNG or JPEG
+          const convertedDataUrl = canvas.toDataURL("image/png"); // Change to image/jpeg for JPEG conversion
+          const response = await fetch(convertedDataUrl);
+          const blob = await response.blob();
+
+          const convertedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".png"), {
+            type: "image/png",
+          });
+
+          resolve(convertedFile);
+        };
+
+        img.onerror = reject;
+      };
+
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleSave = async () => {
     try {
       const values = await form.validateFields();
@@ -90,9 +130,11 @@ const ProductForm = ({
       formData.append("price", values.salePrice);
       formData.append("stockCount", values.stockCount);
 
+      // Convert and compress images before appending to formData
       for (const file of fileList) {
         if (file.originFileObj) {
-          const finalFile = await compressIfLarge(file.originFileObj);
+          let finalFile = await convertToImage(file.originFileObj); // Convert non-PNG/JPEG images
+          finalFile = await compressIfLarge(finalFile); // Compress the image if large
           formData.append("productImage", finalFile);
         }
       }
