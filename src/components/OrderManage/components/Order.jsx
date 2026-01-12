@@ -37,7 +37,7 @@ const Order = () => {
   const deleteOrder = useDeleteOrder();
   const updateOrder = useUpdateOrder();
   const currency = useUserStore((state) => state.currency) || "Ks";
-
+  console.log(orders);
   const [updatingId, setUpdatingId] = useState(null);
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewSrc, setPreviewSrc] = useState("");
@@ -63,7 +63,6 @@ const Order = () => {
 
   const submitProgressChange = async (id, progress, reasonOrCode = "") => {
     try {
-
       setUpdatingId(id);
       const orderData = { progress };
 
@@ -170,34 +169,54 @@ const Order = () => {
     },
     {
       title: "Payment",
-      render: (_, record) => (
-        <Space direction="vertical">
-          <Tag color={record.paymentType === "COD" ? "default" : "cyan"}>
-            {record.paymentType}
-          </Tag>
-          {record.paymentType === "Prepaid" && record.transactionScreenshot && (
-            <Tooltip title="View Screenshot">
-              <div>
-                <Image
-                  src={record.transactionScreenshot}
-                  width={60}
-                  height={60}
-                  preview={false}
-                  style={{
-                    objectFit: "cover",
-                    borderRadius: 8,
-                    border: "1px solid #eee",
-                  }}
-                  onClick={() => {
-                    setPreviewSrc(record.transactionScreenshot);
-                    setPreviewVisible(true);
-                  }}
-                />
-              </div>
-            </Tooltip>
-          )}
-        </Space>
-      ),
+      render: (_, record) => {
+        const screenshots =
+          Array.isArray(record.paymentScreenshot) &&
+          record.paymentScreenshot.length > 0
+            ? record.paymentScreenshot
+            : record.transactionScreenshot
+            ? [record.transactionScreenshot]
+            : [];
+
+        return (
+          <Space direction="vertical">
+            <Tag color={record.paymentType === "COD" ? "default" : "cyan"}>
+              {record.paymentType}
+            </Tag>
+
+            {record.paymentType === "Prepaid" && screenshots.length > 0 && (
+              <Space wrap>
+                {screenshots.map((src, index) => (
+                  <Tooltip key={index} title="View Screenshot">
+                    <Image
+                      src={src}
+                      width={60}
+                      height={60}
+                      preview={false}
+                      style={{
+                        objectFit: "cover",
+                        borderRadius: 8,
+                        border: "1px solid #eee",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => {
+                        setPreviewSrc(src);
+                        setPreviewVisible(true);
+                      }}
+                    />
+                  </Tooltip>
+                ))}
+              </Space>
+            )}
+          </Space>
+        );
+      },
+    },
+    {
+      title: "Order Name",
+      dataIndex: "orderName",
+      key: "orderName",
+      render: (value) => value || <div className="text-red-600">No Name</div>,
     },
     {
       title: "Progress",

@@ -18,7 +18,7 @@ const LandingFormModal = ({
 }) => {
   const [deletedHeroImages, setDeletedHeroImages] = useState([]);
   const [colour, setColour] = useState("#000000");
-
+console.log(landing)
   useEffect(() => {
     if (open) {
       setTimeout(() => {
@@ -176,6 +176,7 @@ const LandingFormModal = ({
   };
 
   const handleFinish = (values) => {
+    console.log(values)
     const formData = new FormData();
     formData.append("storeName", values.storeName);
     formData.append("colourCode", values.colourCode);
