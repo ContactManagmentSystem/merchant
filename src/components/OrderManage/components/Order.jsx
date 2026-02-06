@@ -292,28 +292,33 @@ const Order = () => {
   ];
 
   return (
-    <div className="p-4 max-w-7xl mx-auto">
+    <div className="p-2 sm:p-4 max-w-7xl mx-auto w-full overflow-x-hidden">
       <Card variant={false} style={{ background: "#ffffff" }}>
-        <Title level={3} className="mb-6 text-center">
+        <Title level={3} className="mb-3 sm:mb-4 md:mb-6 text-center text-lg sm:text-xl md:text-2xl">
           🧾 Orders Overview
         </Title>
 
-        <Table
-          rowKey="_id"
-          columns={columns}
-          dataSource={orders?.data || []}
-          loading={isLoading}
-          bordered
-          pagination={{ pageSize: 6 }}
-          scroll={{ x: "max-content" }}
-        />
+        <div className="overflow-x-auto">
+          <Table
+            rowKey="_id"
+            columns={columns}
+            dataSource={orders?.data || []}
+            loading={isLoading}
+            bordered
+            pagination={{ pageSize: 6, responsive: true }}
+            scroll={{ x: "max-content" }}
+            size="small"
+            className="text-xs sm:text-sm"
+          />
+        </div>
       </Card>
 
       <Modal
         open={previewVisible}
         onCancel={() => setPreviewVisible(false)}
         footer={null}
-        width={800}
+        width="90%"
+        style={{ maxWidth: 800 }}
         centered
       >
         <img

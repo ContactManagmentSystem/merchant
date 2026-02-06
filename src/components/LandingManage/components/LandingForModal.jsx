@@ -218,6 +218,9 @@ console.log(landing)
       onCancel={onClose}
       onOk={() => form.submit()}
       okText={landing ? "Update" : "Create"}
+      width="95%"
+      style={{ maxWidth: 600 }}
+      centered
     >
       <Form form={form} layout="vertical" onFinish={handleFinish}>
         <Form.Item
@@ -254,14 +257,17 @@ console.log(landing)
           <label style={{ fontWeight: 500, display: "block", marginBottom: 8 }}>
             Pick Color Visually
           </label>
-          <HexColorPicker
-            color={colour}
-            onChange={(newColor) => {
-              const upperColor = newColor.toUpperCase();
-              setColour(upperColor);
-              form.setFieldsValue({ colourCode: upperColor });
-            }}
-          />
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <HexColorPicker
+              color={colour}
+              onChange={(newColor) => {
+                const upperColor = newColor.toUpperCase();
+                setColour(upperColor);
+                form.setFieldsValue({ colourCode: upperColor });
+              }}
+              style={{ width: "100%", maxWidth: "250px" }}
+            />
+          </div>
         </div>
 
         <Form.Item
