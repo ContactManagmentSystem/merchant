@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Table,
   Button,
@@ -39,13 +39,29 @@ const ProductTable = () => {
     pageSize
   );
   const deleteProduct = useDeleteProduct();
+  const tippyInstancesRef = useRef({});
 
   useEffect(() => {
     setCurrentPage(1);
   }, [pageSize]);
 
+  // Hide all Tippy popups when modal opens
+  useEffect(() => {
+    if (modalVisible) {
+      Object.values(tippyInstancesRef.current).forEach((instance) => {
+        if (instance && typeof instance.hide === "function") {
+          instance.hide();
+        }
+      });
+    }
+  }, [modalVisible]);
+
   const handleDelete = useCallback(
-    (productId, productName) => {
+    (productId, productName, tippyInstance) => {
+      // Hide Tippy popup when delete modal opens
+      if (tippyInstance) {
+        tippyInstance.hide();
+      }
       Modal.confirm({
         title: "Delete Product",
         content: `Are you sure you want to delete "${productName || "this product"}"? This action cannot be undone.`,
@@ -63,7 +79,11 @@ const ProductTable = () => {
     [deleteProduct]
   );
 
-  const handleEdit = useCallback((product) => {
+  const handleEdit = useCallback((product, tippyInstance) => {
+    // Hide Tippy popup when edit modal opens
+    if (tippyInstance) {
+      tippyInstance.hide();
+    }
     setEditingProduct(product);
     setModalType("edit");
     setFileList(product.images.map((url, index) => ({ url, uid: index })));
@@ -163,36 +183,52 @@ const ProductTable = () => {
     {
       title: "Actions",
       key: "actions",
-      render: (_, record) => (
-        <Tippy
-          className="bg-white border shadow"
-          appendTo={() => document.body}
-          content={
-            <div className="p-2">
-              <div
-                className="p-2 text-blue-700 cursor-pointer hover:bg-blue-700 hover:text-white rounded"
-                onClick={() => handleEdit(record)}
-              >
-                Edit
+      render: (_, record) => {
+        const tippyKey = `tippy-${record._id}`;
+        return (
+          <Tippy
+            className="bg-white border shadow"
+            appendTo={() => document.body}
+            onCreate={(instance) => {
+              tippyInstancesRef.current[tippyKey] = instance;
+            }}
+            onDestroy={() => {
+              delete tippyInstancesRef.current[tippyKey];
+            }}
+            content={
+              <div className="p-2">
+                <div
+                  className="p-2 text-blue-700 cursor-pointer hover:bg-blue-700 hover:text-white rounded"
+                  onClick={() => {
+                    const instance = tippyInstancesRef.current[tippyKey];
+                    handleEdit(record, instance);
+                  }}
+                >
+                  Edit
+                </div>
+                <div
+                  className="p-2 text-red-700 cursor-pointer hover:bg-red-700 hover:text-white rounded"
+                  onClick={() => {
+                    const instance = tippyInstancesRef.current[tippyKey];
+                    handleDelete(record._id, record.name, instance);
+                  }}
+                >
+                  Delete
+                </div>
               </div>
-              <div
-                className="p-2 text-red-700 cursor-pointer hover:bg-red-700 hover:text-white rounded"
-                onClick={() => handleDelete(record._id, record.name)}
-              >
-                Delete
-              </div>
-            </div>
-          }
-          arrow={false}
-          placement="bottom"
-          trigger="mouseenter"
-          interactive
-        >
-          <Button type="text">
-            <IconDots />
-          </Button>
-        </Tippy>
-      ),
+            }
+            arrow={false}
+            placement="bottom"
+            trigger="mouseenter"
+            interactive
+            hideOnClick={true}
+          >
+            <Button type="text">
+              <IconDots />
+            </Button>
+          </Tippy>
+        );
+      },
     },
   ];
 
