@@ -19,11 +19,78 @@ import {
   useDeleteCategory,
 } from "../../../api/hooks/useService";
 
+const { useWatch } = Form;
+
 const pageSizeOptions = [
   { value: 5, label: "5" },
   { value: 10, label: "10" },
   { value: 20, label: "20" },
 ];
+
+// Separate component for modal content to use Form.useWatch
+const CategoryModalContent = ({
+  form,
+  fileList,
+  setFileList,
+  editingCategory,
+  modalVisible,
+  setModalVisible,
+  handleSave,
+  uploading,
+}) => {
+  // Watch form values
+  const name = useWatch("name", form);
+  const description = useWatch("description", form);
+
+  // Check if all fields are filled (for create mode, image is required)
+  const isCreateMode = !editingCategory;
+  const hasImage = fileList.length > 0 && (fileList[0]?.originFileObj || fileList[0]?.url);
+  const isFormValid = name && description && (isCreateMode ? hasImage : true);
+
+  return (
+    <Modal
+      title={editingCategory ? "Edit Category" : "Add Category"}
+      open={modalVisible}
+      onCancel={() => setModalVisible(false)}
+      onOk={handleSave}
+      okText={editingCategory ? "Update" : "Create"}
+      confirmLoading={uploading}
+      okButtonProps={{
+        disabled: isCreateMode && !isFormValid,
+      }}
+      width="95%"
+      style={{ maxWidth: 600 }}
+      centered
+    >
+      <Form form={form} layout="vertical">
+        <Form.Item name="name" label="Name" rules={[{ required: true }]}>
+          <Input />
+        </Form.Item>
+        <Form.Item
+          name="description"
+          label="Description"
+          rules={[{ required: true }]}
+        >
+          <Input.TextArea />
+        </Form.Item>
+        <Form.Item 
+          label="Image" 
+          required={isCreateMode}
+          help={isCreateMode && !hasImage ? "Image is required" : ""}
+        >
+          <Upload
+            listType="picture"
+            fileList={fileList}
+            onChange={({ fileList }) => setFileList(fileList)}
+            beforeUpload={() => false}
+          >
+            <Button icon={<UploadOutlined />}>Upload Image</Button>
+          </Upload>
+        </Form.Item>
+      </Form>
+    </Modal>
+  );
+};
 
 const Category = () => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -64,9 +131,18 @@ const Category = () => {
     setModalVisible(true);
   };
 
-  const handleDelete = (id) => {
-    deleteCategory.mutate(id, {
-      onSuccess: () => message.success("Category deleted"),
+  const handleDelete = (id, categoryName) => {
+    Modal.confirm({
+      title: "Delete Category",
+      content: `Are you sure you want to delete "${categoryName || "this category"}"? This action cannot be undone.`,
+      okText: "Delete",
+      okType: "danger",
+      cancelText: "Cancel",
+      onOk: () => {
+        deleteCategory.mutate(id, {
+          onSuccess: () => message.success("Category deleted"),
+        });
+      },
     });
   };
 
@@ -238,8 +314,12 @@ const Category = () => {
       key: "actions",
       render: (_, record) => (
         <div className="flex flex-wrap gap-2">
-          <Button onClick={() => showEditModal(record)}>Edit</Button>
-          <Button danger onClick={() => handleDelete(record._id)}>
+          <Button onClick={() => showEditModal(record)} size="small">Edit</Button>
+          <Button 
+            danger 
+            onClick={() => handleDelete(record._id, record.name)}
+            size="small"
+          >
             Delete
           </Button>
         </div>
@@ -248,64 +328,46 @@ const Category = () => {
   ];
 
   return (
-    <div className="p-4 bg-white rounded shadow w-full overflow-x-auto">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <h2 className="text-xl font-semibold">
-            All Categories <Tag color="blue">{categories.length}</Tag>
+    <div className="p-2 sm:p-4 bg-white rounded shadow w-full overflow-x-auto">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-4 mb-3 sm:mb-4">
+        <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-2 sm:gap-4">
+          <h2 className="text-base sm:text-lg md:text-xl font-semibold">
+            All Categories <Tag color="blue" className="text-xs sm:text-sm">{categories.length}</Tag>
           </h2>
           <Select
             value={pageSize}
             onChange={setPageSize}
             options={pageSizeOptions}
-            style={{ width: 100 }}
+            style={{ width: "100%", minWidth: 100 }}
+            size="small"
           />
         </div>
-        <Button type="primary" onClick={showAddModal}>
+        <Button type="primary" onClick={showAddModal} size="small" className="w-full sm:w-auto">
           Add Category
         </Button>
       </div>
-      <div className="w-full min-w-[600px] overflow-x-auto">
+      <div className="w-full overflow-x-auto">
         <Table
           columns={columns}
           dataSource={categories}
           rowKey="_id"
           loading={isLoading}
           pagination={false}
-          scroll={{ x: true }}
+          scroll={{ x: "max-content" }}
+          size="small"
+          className="text-xs sm:text-sm"
         />
       </div>
-      <Modal
-        title={editingCategory ? "Edit Category" : "Add Category"}
-        open={modalVisible}
-        onCancel={() => setModalVisible(false)}
-        onOk={handleSave}
-        okText={editingCategory ? "Update" : "Create"}
-        confirmLoading={uploading}
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item name="name" label="Name" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="description"
-            label="Description"
-            rules={[{ required: true }]}
-          >
-            <Input.TextArea />
-          </Form.Item>
-          <Form.Item label="Image">
-            <Upload
-              listType="picture"
-              fileList={fileList}
-              onChange={({ fileList }) => setFileList(fileList)}
-              beforeUpload={() => false}
-            >
-              <Button icon={<UploadOutlined />}>Upload Image</Button>
-            </Upload>
-          </Form.Item>
-        </Form>
-      </Modal>
+      <CategoryModalContent
+        form={form}
+        fileList={fileList}
+        setFileList={setFileList}
+        editingCategory={editingCategory}
+        modalVisible={modalVisible}
+        setModalVisible={setModalVisible}
+        handleSave={handleSave}
+        uploading={uploading}
+      />
     </div>
   );
 };

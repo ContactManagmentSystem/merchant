@@ -41,24 +41,24 @@ const AcceptPaymentType = () => {
 
   return (
     <Card
-      title="Accept Payment Types"
+      title={<span className="text-sm sm:text-base">Accept Payment Types</span>}
       bordered
-      className="max-w-xl mx-auto mt-6"
+      className="max-w-xl mx-auto mt-3 sm:mt-6 w-full"
       style={{ borderRadius: 10 }}
     >
       {isLoading ? (
-        <div className="flex justify-center py-6">
+        <div className="flex justify-center py-4 sm:py-6">
           <Spin size="large" />
         </div>
       ) : isError ? (
-        <Alert message="Failed to load landing data." type="error" showIcon />
+        <Alert message="Failed to load landing data." type="error" showIcon className="text-xs sm:text-sm" />
       ) : (
         <>
           <Checkbox.Group
             options={paymentOptions}
             value={selectedTypes}
             onChange={handleChange}
-            className="mb-4 block"
+            className="mb-3 sm:mb-4 block text-xs sm:text-sm"
           />
 
           <Button
@@ -66,12 +66,14 @@ const AcceptPaymentType = () => {
             loading={isPending}
             onClick={handleSubmit}
             block
+            size="small"
+            className="text-xs sm:text-sm"
           >
             {isPending ? "Saving..." : "Save Changes"}
           </Button>
 
           {message && (
-            <Alert message={message} type={status} showIcon className="mt-4" />
+            <Alert message={message} type={status} showIcon className="mt-3 sm:mt-4 text-xs sm:text-sm" />
           )}
         </>
       )}

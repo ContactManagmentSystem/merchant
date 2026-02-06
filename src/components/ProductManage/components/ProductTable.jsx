@@ -45,10 +45,19 @@ const ProductTable = () => {
   }, [pageSize]);
 
   const handleDelete = useCallback(
-    (productId) => {
-      deleteProduct.mutate(productId, {
-        onSuccess: () => message.success("Product deleted successfully"),
-        onError: (err) => message.error(`Error: ${err.message}`),
+    (productId, productName) => {
+      Modal.confirm({
+        title: "Delete Product",
+        content: `Are you sure you want to delete "${productName || "this product"}"? This action cannot be undone.`,
+        okText: "Delete",
+        okType: "danger",
+        cancelText: "Cancel",
+        onOk: () => {
+          deleteProduct.mutate(productId, {
+            onSuccess: () => message.success("Product deleted successfully"),
+            onError: (err) => message.error(`Error: ${err.message}`),
+          });
+        },
       });
     },
     [deleteProduct]
@@ -168,7 +177,7 @@ const ProductTable = () => {
               </div>
               <div
                 className="p-2 text-red-700 cursor-pointer hover:bg-red-700 hover:text-white rounded"
-                onClick={() => handleDelete(record._id)}
+                onClick={() => handleDelete(record._id, record.name)}
               >
                 Delete
               </div>
@@ -204,54 +213,59 @@ const ProductTable = () => {
   const showLimitWarning = postLimit && postCount && postLimit - postCount <= 3;
 
   return (
-    <div className="bg-white p-4 rounded shadow-md w-full overflow-x-auto">
-      <div className="flex flex-col sm:flex-row justify-between mb-2 items-center gap-4">
-        <div className="text-sm text-gray-600">
+    <div className="bg-white p-2 sm:p-4 rounded shadow-md w-full overflow-x-auto">
+      <div className="flex flex-col sm:flex-row justify-between mb-2 items-start sm:items-center gap-2 sm:gap-4">
+        <div className="text-xs sm:text-sm text-gray-600">
           Products: <b>{postCount}</b> / <b>{postLimit}</b>
           {showLimitWarning && (
-            <Text type="danger" className="ml-2">
+            <Text type="danger" className="ml-1 sm:ml-2 text-xs sm:text-sm">
               (You are near your post limit)
             </Text>
           )}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
           <AntSelect
             value={pageSize}
             onChange={(value) => setPageSize(value)}
             options={pageSizeOptions}
-            style={{ width: 120 }}
+            style={{ width: "100%", minWidth: 100 }}
+            size="small"
           />
           <Button
             type="primary"
             onClick={handleAdd}
             disabled={postCount >= postLimit}
+            size="small"
+            className="w-full sm:w-auto"
           >
             Add Product
           </Button>
         </div>
       </div>
 
-      <div className="w-full min-w-[800px]">
+      <div className="w-full overflow-x-auto">
         <Table
           columns={columns}
           dataSource={products}
           rowKey="_id"
           pagination={false}
           bordered
-          scroll={{ x: true }}
+          scroll={{ x: "max-content" }}
+          size="small"
+          className="text-xs sm:text-sm"
         />
       </div>
       <ReactPaginate
         pageCount={totalPages}
-        pageRangeDisplayed={5}
-        marginPagesDisplayed={2}
+        pageRangeDisplayed={3}
+        marginPagesDisplayed={1}
         onPageChange={({ selected }) => setCurrentPage(selected + 1)}
-        containerClassName="flex justify-center gap-2 my-8"
-        pageClassName="p-2 px-3 bg-gray-100 hover:bg-blue-500 hover:text-white border rounded"
+        containerClassName="flex justify-center gap-1 sm:gap-2 my-4 sm:my-8 flex-wrap"
+        pageClassName="p-1 sm:p-2 px-2 sm:px-3 bg-gray-100 hover:bg-blue-500 hover:text-white border rounded text-xs sm:text-sm"
         activeClassName="bg-blue-600 text-blue-600"
-        previousClassName="p-2 px-3 bg-gray-200 border rounded"
-        nextClassName="p-2 px-3 bg-gray-200 border rounded"
-        breakClassName="text-gray-600"
+        previousClassName="p-1 sm:p-2 px-2 sm:px-3 bg-gray-200 border rounded text-xs sm:text-sm"
+        nextClassName="p-1 sm:p-2 px-2 sm:px-3 bg-gray-200 border rounded text-xs sm:text-sm"
+        breakClassName="text-gray-600 text-xs sm:text-sm"
         forcePage={currentPage - 1}
       />
       <Modal
@@ -259,6 +273,9 @@ const ProductTable = () => {
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         footer={null}
+        width="95%"
+        style={{ maxWidth: 800 }}
+        centered
       >
         <ProductForm
           modalType={modalType}

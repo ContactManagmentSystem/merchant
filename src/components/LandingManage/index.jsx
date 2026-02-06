@@ -68,20 +68,23 @@ const LandingManagement = () => {
   };
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-8 bg-neutral-900 rounded shadow-lg max-w-6xl mx-auto mt-10 text-white space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-2xl font-bold">Landing Management</h2>
+    <div className="px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 bg-neutral-900 rounded shadow-lg max-w-6xl mx-auto mt-4 sm:mt-6 md:mt-10 text-white space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold">Landing Management</h2>
         <Button
           type="primary"
           icon={<PlusOutlined />}
           onClick={() => setModalVisible(true)}
+          size="small"
+          className="text-xs sm:text-sm"
         >
-          {landing ? "Edit Landing" : "Create Landing"}
+          <span className="hidden xs:inline">{landing ? "Edit Landing" : "Create Landing"}</span>
+          <span className="xs:hidden">{landing ? "Edit" : "Create"}</span>
         </Button>
       </div>
 
       {isLoading ? (
-        <p className="text-gray-400">Loading landing info...</p>
+        <p className="text-gray-400 text-sm sm:text-base">Loading landing info...</p>
       ) : isError ? (
         <Alert
           message="Landing not found"
@@ -90,22 +93,23 @@ const LandingManagement = () => {
           }
           type="warning"
           showIcon
+          className="text-xs sm:text-sm"
         />
       ) : landing ? (
-        <div className="space-y-8 animate-fade-in">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
+        <div className="space-y-4 sm:space-y-6 md:space-y-8 animate-fade-in">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            <div className="space-y-3 sm:space-y-4">
               <div>
-                <p className="font-semibold text-gray-300">Store Name:</p>
-                <div className="text-white font-semibold break-words">
+                <p className="font-semibold text-gray-300 text-xs sm:text-sm">Store Name:</p>
+                <div className="text-white font-semibold break-words text-sm sm:text-base">
                   {landing.storeName}
                 </div>
               </div>
 
               <div>
-                <p className="font-semibold text-gray-300">Colour Code:</p>
+                <p className="font-semibold text-gray-300 text-xs sm:text-sm">Colour Code:</p>
                 <span
-                  className="inline-block mt-1 px-3 py-1 rounded shadow-md border"
+                  className="inline-block mt-1 px-2 sm:px-3 py-1 rounded shadow-md border text-xs sm:text-sm"
                   style={{ backgroundColor: landing.colourCode, color: "#fff" }}
                 >
                   {landing.colourCode}
@@ -113,37 +117,37 @@ const LandingManagement = () => {
               </div>
 
               <div>
-                <p className="font-semibold text-gray-300">Currency:</p>
-                <div className="text-white">
+                <p className="font-semibold text-gray-300 text-xs sm:text-sm">Currency:</p>
+                <div className="text-white text-sm sm:text-base">
                   {landing.currency || "Not set"}
                 </div>
               </div>
             </div>
 
             <div>
-              <p className="font-semibold text-gray-300 mb-2">
+              <p className="font-semibold text-gray-300 mb-2 text-xs sm:text-sm">
                 Main Landing Image:
               </p>
               <img
                 src={landing.image}
                 alt="Landing Preview"
-                className="w-full max-h-72 rounded-lg shadow-md border object-cover"
+                className="w-full max-h-48 sm:max-h-64 md:max-h-72 rounded-lg shadow-md border object-cover"
               />
             </div>
           </div>
 
           {landing.heroImage?.length > 0 && (
             <div>
-              <p className="font-semibold text-gray-300 mb-2 text-lg">
+              <p className="font-semibold text-gray-300 mb-2 text-sm sm:text-base md:text-lg">
                 Hero Banner Images:
               </p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-4">
                 {landing.heroImage.map((url, idx) => (
                   <img
                     key={idx}
                     src={url}
                     alt={`Hero Image ${idx + 1}`}
-                    className="rounded-lg border shadow-sm object-cover w-full h-40"
+                    className="rounded-lg border shadow-sm object-cover w-full h-24 sm:h-32 md:h-40"
                   />
                 ))}
               </div>

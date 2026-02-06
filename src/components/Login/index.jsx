@@ -30,21 +30,26 @@ const Login = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4">
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 px-2 sm:px-4 py-4">
       <Card
         className="w-full max-w-md"
         bordered={false}
         style={{
           borderRadius: "16px",
-          padding: "24px",
+          padding: "16px",
           boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
         }}
+        bodyStyle={{
+          padding: "16px",
+        }}
       >
-        <div className="text-center mb-6">
-          <Title level={2} className="!mb-1">
-            Welcome Back <IconHeartFilled className="inline text-red-500" />
+        <div className="text-center mb-4 sm:mb-6">
+          <Title level={2} className="!mb-1 !text-xl sm:!text-2xl">
+            Welcome Back <IconHeartFilled className="inline text-red-500 text-lg sm:text-xl" />
           </Title>
-          <Text type="secondary">Please log in to your account</Text>
+          <Text type="secondary" className="text-xs sm:text-sm">
+            Please log in to your account
+          </Text>
         </div>
 
         <Form

@@ -100,10 +100,10 @@ const Payment = () => {
   ];
 
   return (
-    <div className="px-4 py-6 max-w-screen-xl mx-auto">
+    <div className="px-2 sm:px-4 py-3 sm:py-6 max-w-screen-xl mx-auto w-full">
       <Card bordered={false} className="bg-white shadow-md rounded-lg">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-          <Title level={3} style={{ margin: 0 }} className="text-gray-800">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 mb-3 sm:mb-4">
+          <Title level={3} style={{ margin: 0 }} className="text-gray-800 text-base sm:text-lg md:text-xl">
             My Payment Methods
           </Title>
           <Button
@@ -111,6 +111,7 @@ const Payment = () => {
             icon={<PlusOutlined />}
             onClick={openCreateModal}
             className="w-full sm:w-auto"
+            size="small"
           >
             Add New
           </Button>
@@ -123,8 +124,10 @@ const Payment = () => {
             rowKey="_id"
             loading={isLoading}
             bordered
-            pagination={{ pageSize: 5 }}
-            size="middle"
+            pagination={{ pageSize: 5, responsive: true }}
+            size="small"
+            className="text-xs sm:text-sm"
+            scroll={{ x: "max-content" }}
           />
         </div>
       </Card>
